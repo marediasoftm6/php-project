@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Discuuss World (DW)</title>
+    <?php include('./client/commonFiles.php') ?>
+</head>
+
+<body>
+    <?php
+    session_start();
+    include('./client/header.php');
+    ?>
+
+    <?php
+    if (isset($_GET['signup']) && !isset($_SESSION['user']['username'])) {
+        include('./client/signup.php');
+    } else if (isset($_GET['login']) && !isset($_SESSION['user']['username'])) {
+        include('./client/login.php');
+    } else if(isset($_GET['askQuestion'])) {
+        include('./client/askQuestion.php');
+    }
+    ?>
+</body>
+
+</html>

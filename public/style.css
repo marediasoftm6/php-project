@@ -1,0 +1,27 @@
+*{
+    background-color: #FFFFFE;
+}
+
+.websiteLogo{
+    height: 129px;
+    width: 208px;
+}
+
+.navbar-text{
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+    font-size: x-large;
+    font-weight: 400;
+}
+
+.navbar-text a:hover{
+  color: #002A64;
+}
+
+.heading-center{
+    margin-top: 15px;
+    text-align: center;
+}
+
+.margin-bottom-15{
+    margin-bottom: 15px;
+}
