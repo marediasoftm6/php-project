@@ -9,7 +9,7 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav mx-auto mb-2 mb-lg-0 navbar-text d-flex flex-row gap-5">
         <li class="nav-item">
-          <a class="nav-link" href="#">About US</a>
+          <a class="nav-link" href="#">About Us</a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="#">
