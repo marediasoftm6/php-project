@@ -18,7 +18,7 @@
 
         <div class="col-6 offset-sm-3 d-flex justify-content-between align-items-center">
             <button type="submit" name="login" class="btn btn-primary">Login</button>
-            <a href="?signup=true" class="text-decoration-none">Don't have an account? Signup Here</a>
+            <a href="?signup=true" class="text-decoration-none">Don't have an account? Signup</a>
         </div>
     </form>
 </div>

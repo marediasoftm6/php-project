@@ -19,6 +19,11 @@
         include('./client/login.php');
     } else if(isset($_GET['askQuestion'])) {
         include('./client/askQuestion.php');
+    } else if(isset($_GET['q-id'])) {
+        include('./client/question-details.php');
+    }
+    else{
+        include('./client/questions.php');
     }
     ?>
 </body>

@@ -25,3 +25,20 @@
 .margin-bottom-15{
     margin-bottom: 15px;
 }
+
+.margin-bottom-2{
+    margin-bottom: 50px;
+}
+
+.question-list {
+    border: 1px solid #002a6427;
+    padding: 15px;
+    margin: 10px;
+    border-radius: 10px;
+}
+
+.question-list a{
+    font-size: 18px;
+    text-decoration: none;
+    color: #002A64;
+}
