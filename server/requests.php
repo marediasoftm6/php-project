@@ -37,20 +37,36 @@ if (isset($_POST['signup'])) {
 } else if (isset($_GET['logout'])) {
     session_unset();
     header(header: "location: /discussworld");
-    
+// } else if (isset($_POST["ask"])) {
+//     $title = $_POST['title'];
+//     $description = $_POST['description'];
+//     $category_id = $_POST['category'];
+//     $user_id = $_SESSION['user']['user_id'];
+//     $question = $conn->prepare(query: "INSERT INTO `questions` (`id`, `title`, `description`, `category_id`, `user_id`)
+//     values(NULL, '$title', '$description', '$category_id', '$user_id');
+//     ");
+//     $result = $question->execute();
+//     $question->insert_id;
+//     if ($result) {
+//         header(header: "location: /discussworld");
+//     } else {
+//         echo "Question not added, please check all the fields.";
+//     }
+// }
 } else if (isset($_POST["ask"])) {
     $title = $_POST['title'];
     $description = $_POST['description'];
     $category_id = $_POST['category'];
     $user_id = $_SESSION['user']['user_id'];
-    $question = $conn->prepare(query: "Insert into `questions` (`id`, `title`, `description`, `category_id`, `user_id`)
-    values(NULL, '$title', '$description', '$category_id', '$user_id');");
 
-    $result = $question->execute();
-    $question->insert_id;
-    if ($result) {
-        header(header: "location: /discussworld");
+    $stmt = $conn->prepare("INSERT INTO questions (title, description, category_id, user_id)
+                            VALUES (?, ?, ?, ?)");
+
+    $stmt->bind_param("ssii", $title, $description, $category_id, $user_id);
+
+    if ($stmt->execute()) {
+        header("location: /discussworld");
     } else {
-        echo "Question not added, please check all the fields.";
+        echo "Question not added: " . $stmt->error;
     }
 }

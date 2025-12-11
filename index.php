@@ -17,12 +17,12 @@
         include('./client/signup.php');
     } else if (isset($_GET['login']) && !isset($_SESSION['user']['username'])) {
         include('./client/login.php');
-    } else if(isset($_GET['askQuestion'])) {
+    } else if (isset($_GET['askQuestion'])) {
         include('./client/askQuestion.php');
-    } else if(isset($_GET['q-id'])) {
+    } else if (isset($_GET['q-id'])) {
+        $qid=$_GET['q-id'];
         include('./client/question-details.php');
-    }
-    else{
+    } else {
         include('./client/questions.php');
     }
     ?>
