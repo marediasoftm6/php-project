@@ -37,22 +37,24 @@ if (isset($_POST['signup'])) {
 } else if (isset($_GET['logout'])) {
     session_unset();
     header(header: "location: /discussworld");
-// } else if (isset($_POST["ask"])) {
-//     $title = $_POST['title'];
-//     $description = $_POST['description'];
-//     $category_id = $_POST['category'];
-//     $user_id = $_SESSION['user']['user_id'];
-//     $question = $conn->prepare(query: "INSERT INTO `questions` (`id`, `title`, `description`, `category_id`, `user_id`)
-//     values(NULL, '$title', '$description', '$category_id', '$user_id');
-//     ");
-//     $result = $question->execute();
-//     $question->insert_id;
-//     if ($result) {
-//         header(header: "location: /discussworld");
-//     } else {
-//         echo "Question not added, please check all the fields.";
-//     }
-// }
+    
+    // } else if (isset($_POST["ask"])) {
+    //     $title = $_POST['title'];
+    //     $description = $_POST['description'];
+    //     $category_id = $_POST['category'];
+    //     $user_id = $_SESSION['user']['user_id'];
+    //     $question = $conn->prepare(query: "INSERT INTO `questions` (`id`, `title`, `description`, `category_id`, `user_id`)
+    //     values(NULL, '$title', '$description', '$category_id', '$user_id');
+    //     ");
+    //     $result = $question->execute();
+    //     $question->insert_id;
+    //     if ($result) {
+    //         header(header: "location: /discussworld");
+    //     } else {
+    //         echo "Question not added, please check all the fields.";
+    //     }
+    // }
+
 } else if (isset($_POST["ask"])) {
     $title = $_POST['title'];
     $description = $_POST['description'];
@@ -68,5 +70,35 @@ if (isset($_POST['signup'])) {
         header("location: /discussworld");
     } else {
         echo "Question not added: " . $stmt->error;
+    }
+
+    // } else if (isset($_POST["answers"])) {
+    //     $answer = $_POST['answer'];
+    //     $question_id = $_POST['question_id'];
+    //     $user_id = $_SESSION['user']['user_id'];
+    //     $query = $conn->prepare("INSERT INTO answers (id, answer, question_id, user_id)
+    //                             VALUES (?, ?, ?, ?)");
+    //     $query->bind_param("ssii", NULL, $answer, $question_id, $user_id);
+    //     if ($query->execute()) {
+    //         header("location: /discussworld");
+    //     } else {
+    //         echo "Answer not added: " . $query->error;
+    //     }
+    // }
+
+} else if (isset($_POST["answer"])) {
+    $answer = $_POST['answer'];
+    $question_id = $_POST['question_id'];
+    $user_id = $_SESSION['user']['user_id'];
+
+    $query = $conn->prepare("INSERT INTO answers (answer, question_id, user_id) VALUES (?, ?, ?)");
+
+    $query->bind_param("sii", $answer, $question_id, $user_id);
+
+    if ($query->execute()) {
+        header("location: /discussworld");
+        exit;
+    } else {
+        echo "Answer is not added to the website: " . $query->error;
     }
 }

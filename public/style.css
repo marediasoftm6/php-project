@@ -26,6 +26,9 @@
 .margin-bottom-2{
     margin-bottom: 50px;
 }
+.margin-top-2{
+    margin-top: 50px;
+}
 .question-list {
     border: 1px solid #002a6427;
     padding: 15px;
@@ -34,6 +37,11 @@
 }
 .question-list a, .question-title {
     font-size: 18px;
+    text-decoration: none;
+    color: #002A64;
+}
+.question-title {
+    font-size: 26px;
     text-decoration: none;
     color: #002A64;
 }
