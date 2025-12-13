@@ -1,19 +1,29 @@
 <div class="container">
-    <h1 class="heading-center margin-bottom-2">Questions</h1>
-    <div class="col-8">
-        <?php
-        include("./common/db.php");
-        $qeury = "select * from questions";
-        $result = $conn->query($qeury);
-        foreach ($result as $row) {
-            $title = $row["title"];
-            $id = $row["id"];
-            echo "<div class='row question-list'>
+    <div class="row">
+        <div class="col-7">
+            <h2 class="heading-center margin-bottom-2">Questions</h2>
+            <?php
+            include("./common/db.php");
+            if (isset($_GET["c-id"])) {
+                $qeury = "select * from questions where category_id=$cid";
+            } else {
+                $qeury = "select * from questions";
+            }
+            $result = $conn->query($qeury);
+            foreach ($result as $row) {
+                $title = $row["title"];
+                $id = $row["id"];
+                echo "<div class='row question-list'>
             <h4>
             <a href='?q-id=$id'>$title</a>
             </h4>
             </div>";
-        }
-        ?>
+            }
+            ?>
+        </div>
+        <div class="col-1"></div>
+        <div class="col-4">
+            <?php include("categoryList.php") ?>
+        </div>
     </div>
 </div>

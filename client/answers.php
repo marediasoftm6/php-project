@@ -1,5 +1,5 @@
 <div class="container">
-    <h4 class="margin-bottom-15 margin-top-2">Answers</h4>
+    <h4 class="margin-bottom-15 margin-top-2 ">Answers</h4>
     <div class="margin-bottom-2">
         <?php
         include("./common/db.php");
@@ -8,7 +8,7 @@
         foreach ($result as $row) {
             $answer = $row["answer"];
             $id = $row["id"];
-            echo "<p>$id. $answer</p>";
+            echo "<p class='answer-card'>$id. $answer</p>";
         }
         ?>
     </div>

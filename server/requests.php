@@ -37,7 +37,7 @@ if (isset($_POST['signup'])) {
 } else if (isset($_GET['logout'])) {
     session_unset();
     header(header: "location: /discussworld");
-    
+
     // } else if (isset($_POST["ask"])) {
     //     $title = $_POST['title'];
     //     $description = $_POST['description'];
@@ -67,7 +67,7 @@ if (isset($_POST['signup'])) {
     $stmt->bind_param("ssii", $title, $description, $category_id, $user_id);
 
     if ($stmt->execute()) {
-        header("location: /discussworld");
+        header("location: /discussworld/");
     } else {
         echo "Question not added: " . $stmt->error;
     }
@@ -96,7 +96,7 @@ if (isset($_POST['signup'])) {
     $query->bind_param("sii", $answer, $question_id, $user_id);
 
     if ($query->execute()) {
-        header("location: /discussworld");
+        header("location: /discussworld?q-id=$question_id");
         exit;
     } else {
         echo "Answer is not added to the website: " . $query->error;
