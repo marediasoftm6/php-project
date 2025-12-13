@@ -12,7 +12,7 @@ if (isset($_POST['signup'])) {
     echo $user->insert_id;
     if ($result) {
         $_SESSION["user"] = ["username" => $username, "email" => $email, "password" => $password, "user_id" => $user->insert_id];
-        header(header: "location: /discussworld");
+        header(header: "location: /quesiono");
     } else {
         echo "Registration Failed!! Try Again";
     }
@@ -30,13 +30,13 @@ if (isset($_POST['signup'])) {
             $user_id = $row['id'];
         }
         $_SESSION["user"] = ["username" => $username, "email" => $email, "password" => $password, "user_id" => $user_id];
-        header(header: "location: /discussworld");
+        header(header: "location: /quesiono");
     } else {
         echo "Login Failed!! Try Again";
     }
 } else if (isset($_GET['logout'])) {
     session_unset();
-    header(header: "location: /discussworld");
+    header(header: "location: /quesiono");
 
     // } else if (isset($_POST["ask"])) {
     //     $title = $_POST['title'];
@@ -49,7 +49,7 @@ if (isset($_POST['signup'])) {
     //     $result = $question->execute();
     //     $question->insert_id;
     //     if ($result) {
-    //         header(header: "location: /discussworld");
+    //         header(header: "location: /quesiono");
     //     } else {
     //         echo "Question not added, please check all the fields.";
     //     }
@@ -67,7 +67,7 @@ if (isset($_POST['signup'])) {
     $stmt->bind_param("ssii", $title, $description, $category_id, $user_id);
 
     if ($stmt->execute()) {
-        header("location: /discussworld/");
+        header("location: /quesiono/");
     } else {
         echo "Question not added: " . $stmt->error;
     }
@@ -80,7 +80,7 @@ if (isset($_POST['signup'])) {
     //                             VALUES (?, ?, ?, ?)");
     //     $query->bind_param("ssii", NULL, $answer, $question_id, $user_id);
     //     if ($query->execute()) {
-    //         header("location: /discussworld");
+    //         header("location: /quesiono");
     //     } else {
     //         echo "Answer not added: " . $query->error;
     //     }
@@ -96,7 +96,7 @@ if (isset($_POST['signup'])) {
     $query->bind_param("sii", $answer, $question_id, $user_id);
 
     if ($query->execute()) {
-        header("location: /discussworld?q-id=$question_id");
+        header("location: /quesiono?q-id=$question_id");
         exit;
     } else {
         echo "Answer is not added to the website: " . $query->error;

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>Discuuss World (DW)</title>
+    <title>Quesiono</title>
     <?php include('./client/commonFiles.php') ?>
 </head>
 
