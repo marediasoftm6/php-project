@@ -6,6 +6,10 @@
             include("./common/db.php");
             if (isset($_GET["c-id"])) {
                 $qeury = "select * from questions where category_id=$cid";
+            } else if (isset($_GET["u-id"])) {
+                $qeury = "select * from questions where user_id=$uid";
+            } else if (isset($_GET["latest"])) {
+                $qeury = "select * from questions order by id desc";
             } else {
                 $qeury = "select * from questions";
             }

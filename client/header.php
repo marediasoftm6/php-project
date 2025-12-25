@@ -11,14 +11,6 @@
         <li class="nav-item">
           <a class="nav-link" href="#">About Us</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">
-            Categories
-          </a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="#">My QnA</a>
-        </li>
         <?php
         if (isset($_SESSION['user']['username'])) { ?>
           <li class="nav-item">
@@ -26,6 +18,9 @@
           </li>
           <li class="nav-item">
             <a class="nav-link" href="?askQuestion=true">Ask Here</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="?u-id=<?php echo $_SESSION['user']['user_id'] ?>">My QnA</a>
           </li>
         <?php }
         ?>
@@ -39,7 +34,21 @@
           </li>
         <?php }
         ?>
+        <li class="nav-item">
+          <a class="nav-link" href="#">
+            Categories
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="?latest=true">
+            Latest
+          </a>
+        </li>
       </ul>
+      <form class="d-flex" action="" role="search">
+        <input class="form-control me-2" name="search" type="search" placeholder="Search Questions"/>
+        <button class="btn btn-outline-success" type="submit">Search</button>
+      </form>
     </div>
   </div>
 </nav>
