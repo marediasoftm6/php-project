@@ -17,6 +17,7 @@
             ?>
         </div>
 
+        <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
         <div class="col-6 offset-sm-3 d-flex justify-content-between align-items-center">
             <button type="submit" name="ask" class="btn btn-primary">Ask</button>
         </div>

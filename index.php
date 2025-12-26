@@ -1,3 +1,9 @@
+<?php
+session_start();
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,7 +14,6 @@
 
 <body style="padding-inline: 20px;">
     <?php
-    session_start();
     include('./client/header.php');
     ?>
 
@@ -25,11 +30,17 @@
     } else if (isset($_GET['c-id'])) {
         $cid = $_GET['c-id'];
         include('./client/questions.php');
+    } else if (isset($_GET['categories'])) {
+        include('./client/categories.php');
     } else if (isset($_GET['u-id'])) {
         $uid = $_GET['u-id'];
         include('./client/questions.php');
     } else if (isset($_GET['latest'])) {
         include('./client/questions.php');
+    } else if (isset($_GET['search'])) {
+        include('./client/questions.php');
+    } else if (isset($_GET['about'])) {
+        include('./client/about.php');
     } else {
         include('./client/questions.php');
     }

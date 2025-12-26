@@ -1,15 +1,15 @@
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
+<nav class="navbar navbar-expand-lg bg-body-tertiary navbar-light">
   <div class="container-fluid">
     <a class="navbar-brand" href="./">
       <img src="./public/logo.png" alt="Quesiono World Logo" class="websiteLogo">
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0 navbar-text d-flex flex-row gap-5">
+      <ul class="navbar-nav mx-auto mb-2 mb-lg-0 navbar-text d-flex flex-lg-row gap-4">
         <li class="nav-item">
-          <a class="nav-link" href="#">About Us</a>
+          <a class="nav-link" href="?about=true">About Us</a>
         </li>
         <?php
         if (isset($_SESSION['user']['username'])) { ?>
@@ -35,7 +35,7 @@
         <?php }
         ?>
         <li class="nav-item">
-          <a class="nav-link" href="#">
+          <a class="nav-link" href="?categories=true">
             Categories
           </a>
         </li>

@@ -1,5 +1,5 @@
 <div class="mt-15">
-    <h2 class="margin-bottom-2">Categories</h2>
+    <h2 class="margin-bottom-15">Categories</h2>
     <?php 
     include("./common/db.php");
     $qeury= "select * from category";
