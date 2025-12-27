@@ -11,7 +11,7 @@
         $oneRes = $one->get_result();
         if ($oneRes->num_rows === 1) {
             $oneRow = $oneRes->fetch_assoc();
-            ?>
+    ?>
             <form class="margin-bottom-15" method="post" action="./server/requests.php">
                 <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="category_id" value="<?php echo (int)$oneRow['id'] ?>">
@@ -21,7 +21,7 @@
                 </div>
                 <button type="submit" name="editCategory" class="btn btn-primary">Save</button>
             </form>
-            <?php
+    <?php
         }
     }
     $stmt = $conn->prepare("select c.id, c.name, count(q.id) as cnt from category c left join questions q on q.category_id=c.id group by c.id, c.name order by c.name asc");
@@ -33,9 +33,22 @@
         $cnt = (int)$row["cnt"];
         $deleteLink = "./server/requests.php?deleteCategory=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
         $editLink = "?categories=true&edit-c=$id";
-        echo "<div class='categories-list'><h4 class='my-question'><a href='?c-id=$id'>$name</a><span class='categories-count'>$cnt</span>";
-        echo $canManage ? "<a class='action-btn' href='$editLink'>Edit</a><a class='action-btn' href='$deleteLink'>Delete</a>" : "";
-        echo "</h4></div>";
+        echo "<div class='categories-list'><h4 class='my-question'>";
+        echo "<span class='q-left'><a href='?c-id=$id'>$name</a></span>";
+        echo "<span class='q-right'>";
+        echo "<div class='dropdown d-inline-block'>";
+        echo "<button class='btn row-actions-toggle' type='button' data-bs-toggle='dropdown' aria-expanded='false' aria-label='Category actions'><span class='dots'>•••</span></button>";
+        echo "<ul class='dropdown-menu dropdown-menu-end'>";
+        if ($canManage) {
+            echo "<li><a class='dropdown-item' href='$editLink'>Edit</a></li>";
+            echo "<li><a class='dropdown-item' href='$deleteLink'>Delete</a></li>";
+        } else {
+            echo "<li><a class='dropdown-item' href='?login=true'>Login</a></li>";
+            echo "<li><a class='dropdown-item' href='?signup=true'>Signup</a></li>";
+        }
+        echo "</ul></div>";
+        echo "<span class='categories-count'>$cnt</span>";
+        echo "</span></h4></div>";
     }
     ?>
 </div>

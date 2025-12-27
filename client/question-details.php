@@ -13,7 +13,7 @@
             $owner = isset($_SESSION['user']['user_id']) && ((int)$_SESSION['user']['user_id'] === (int)$row['user_id']);
             $titleSafe = htmlspecialchars($row['title'], ENT_QUOTES, 'UTF-8');
             echo "<h2 class='mt-15 question-title'>Q. " . $titleSafe . "</h2>";
-            if ($owner) {
+            if ($owner && !isset($_GET['edit-q'])) {
                 echo "<div class='mt-15'><a class='action-btn' href='?q-id=$qid&edit-q=true'>Edit</a></div>";
             }
             if ($owner && isset($_GET['edit-q'])) {

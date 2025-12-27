@@ -41,6 +41,12 @@ if (empty($_SESSION['csrf_token'])) {
         include('./client/questions.php');
     } else if (isset($_GET['about'])) {
         include('./client/about.php');
+    } else if (isset($_GET['profile'])) {
+        include('./client/profile.php');
+    } else if (isset($_GET['profile_edit'])) {
+        include('./client/profile-edit.php');
+    } else if (isset($_GET['settings'])) {
+        include('./client/settings.php');
     } else {
         include('./client/questions.php');
     }

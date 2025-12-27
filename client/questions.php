@@ -37,9 +37,21 @@
                 $acnt = isset($row["acnt"]) ? (int)$row["acnt"] : 0;
                 $deleteLink = "./server/requests.php?delete=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
                 $editLink = "?q-id=$id&edit-q=true";
-                echo "<div class='row question-list'><h4 class='my-question'><a href='?q-id=$id'>$title</a><span class='answers-count'>$acnt</span>";
-                echo $isMyQnA ? "<a class='action-btn' href='$editLink'>Edit</a><a class='action-btn' href='$deleteLink'>Delete</a>" : "";
-                echo "</h4></div>";
+                echo "<div class='row question-list'><h4 class='my-question'>";
+                echo "<span class='q-left'><a href='?q-id=$id'>$title</a></span>";
+                echo "<span class='q-right'>";
+                if ($isMyQnA) {
+                    echo "<div class='dropdown d-inline-block'>";
+                    echo "<button class='btn row-actions-toggle' type='button' data-bs-toggle='dropdown' aria-expanded='false' aria-label='Question actions'>";
+                    echo "<span class='dots'>•••</span>";
+                    echo "</button>";
+                    echo "<ul class='dropdown-menu dropdown-menu-end'>";
+                    echo "<li><a class='dropdown-item' href='$editLink'>Edit</a></li>";
+                    echo "<li><a class='dropdown-item' href='$deleteLink'>Delete</a></li>";
+                    echo "</ul></div>";
+                }
+                echo "<span class='answers-count'>$acnt</span>";
+                echo "</span></h4></div>";
             }
             ?>
         </div>

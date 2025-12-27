@@ -1,6 +1,6 @@
 <div class="container">
     <h4 class="margin-bottom-15 margin-top-2 ">Answers</h4>
-    <div class="margin-bottom-2">
+    <div class="margin-bottom-15">
         <?php
         include("./common/db.php");
         $stmt = $conn->prepare("select id, answer, user_id from answers where question_id = ?");

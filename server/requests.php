@@ -1,6 +1,7 @@
 <?php
 session_start();
 include("../common/db.php");
+include("config.php");
 if (isset($_POST['signup'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
@@ -8,9 +9,9 @@ if (isset($_POST['signup'])) {
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $hashed = password_hash($password, PASSWORD_DEFAULT);
+    $storePass = (defined('AUTH_HASH_ENABLED') && AUTH_HASH_ENABLED) ? password_hash($password, PASSWORD_DEFAULT) : $password;
     $stmt = $conn->prepare("INSERT INTO `users` (`username`, `email`, `password`) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $username, $email, $hashed);
+    $stmt->bind_param("sss", $username, $email, $storePass);
     if ($stmt->execute()) {
         $_SESSION["user"] = ["username" => $username, "email" => $email, "user_id" => $stmt->insert_id];
         header("location: /Quesiono/");
@@ -44,24 +45,6 @@ if (isset($_POST['signup'])) {
 } else if (isset($_GET['logout'])) {
     session_unset();
     header("location: /Quesiono/");
-
-    // } else if (isset($_POST["ask"])) {
-    //     $title = $_POST['title'];
-    //     $description = $_POST['description'];
-    //     $category_id = $_POST['category'];
-    //     $user_id = $_SESSION['user']['user_id'];
-    //     $question = $conn->prepare(query: "INSERT INTO `questions` (`id`, `title`, `description`, `category_id`, `user_id`)
-    //     values(NULL, '$title', '$description', '$category_id', '$user_id');
-    //     ");
-    //     $result = $question->execute();
-    //     $question->insert_id;
-    //     if ($result) {
-    //         header(header: "location: /quesiono");
-    //     } else {
-    //         echo "Question not added, please check all the fields.";
-    //     }
-    // }
-
 } else if (isset($_POST["ask"])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
@@ -79,10 +62,8 @@ if (isset($_POST['signup'])) {
         echo "Please fill all required fields.";
         exit;
     }
-
     $stmt = $conn->prepare("INSERT INTO questions (title, description, category_id, user_id)
                             VALUES (?, ?, ?, ?)");
-
     $stmt->bind_param("ssii", $title, $description, $category_id, $user_id);
 
     if ($stmt->execute()) {
@@ -90,21 +71,6 @@ if (isset($_POST['signup'])) {
     } else {
         echo "Question not added: " . $stmt->error;
     }
-
-    // } else if (isset($_POST["answers"])) {
-    //     $answer = $_POST['answer'];
-    //     $question_id = $_POST['question_id'];
-    //     $user_id = $_SESSION['user']['user_id'];
-    //     $query = $conn->prepare("INSERT INTO answers (id, answer, question_id, user_id)
-    //                             VALUES (?, ?, ?, ?)");
-    //     $query->bind_param("ssii", NULL, $answer, $question_id, $user_id);
-    //     if ($query->execute()) {
-    //         header("location: /quesiono");
-    //     } else {
-    //         echo "Answer not added: " . $query->error;
-    //     }
-    // }
-
 } else if (isset($_POST["answer"])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
@@ -293,5 +259,58 @@ if (isset($_POST['signup'])) {
         header("location: /Quesiono/?categories=true");
     } else {
         echo "Deletion Failed!! Try Again";
+    }
+} else if (isset($_POST['editProfile'])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/?login=true");
+        exit;
+    }
+    $uid = (int)$_SESSION['user']['user_id'];
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $upd = $conn->prepare("UPDATE users SET username=?, email=? WHERE id=?");
+    $upd->bind_param("ssi", $username, $email, $uid);
+    if ($upd->execute()) {
+        $_SESSION['user']['username'] = $username;
+        $_SESSION['user']['email'] = $email;
+        header("location: /Quesiono/?profile=true");
+    } else {
+        echo "Profile update failed, try again";
+    }
+} else if (isset($_POST['changePassword'])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/?login=true");
+        exit;
+    }
+    $uid = (int)$_SESSION['user']['user_id'];
+    $old = $_POST['old_password'];
+    $new = $_POST['new_password'];
+    $stmt = $conn->prepare("SELECT password FROM users WHERE id=?");
+    $stmt->bind_param("i", $uid);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows === 1) {
+        $row = $res->fetch_assoc();
+        $valid = password_verify($old, $row['password']) || ($old === $row['password']);
+        if ($valid) {
+            $storePass = (defined('AUTH_HASH_ENABLED') && AUTH_HASH_ENABLED) ? password_hash($new, PASSWORD_DEFAULT) : $new;
+            $upd = $conn->prepare("UPDATE users SET password=? WHERE id=?");
+            $upd->bind_param("si", $storePass, $uid);
+            if ($upd->execute()) {
+                header("location: /Quesiono/?settings=true");
+            } else {
+                echo "Password update failed, try again";
+            }
+        } else {
+            echo "Current password incorrect";
+        }
+    } else {
+        echo "User not found";
     }
 }
