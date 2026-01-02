@@ -14,6 +14,32 @@ if (isset($_POST['signup'])) {
     $stmt->bind_param("sss", $username, $email, $storePass);
     if ($stmt->execute()) {
         $_SESSION["user"] = ["username" => $username, "email" => $email, "user_id" => $stmt->insert_id];
+        // Email verification token setup
+        $ddl = "CREATE TABLE IF NOT EXISTS email_verification_tokens (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            user_id INT NOT NULL,
+            token CHAR(64) NOT NULL,
+            expires_at DATETIME NOT NULL,
+            used TINYINT(1) NOT NULL DEFAULT 0,
+            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_token (token),
+            INDEX idx_user_expires (user_id, expires_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        $conn->query($ddl);
+        $token = generate_token(64);
+        $expires = date('Y-m-d H:i:s', time() + 60 * 60); // 1 hour
+        $ins = $conn->prepare("INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");
+        $uid = (int)$stmt->insert_id;
+        $ins->bind_param("iss", $uid, $token, $expires);
+        $ins->execute();
+        $verifyLink = base_url() . "/server/requests.php?verifyEmail=" . urlencode($token);
+        $subject = "Verify your email for Quesiono";
+        $body = "<p>Hello " . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ",</p>
+                 <p>Please verify your email address by clicking the link below:</p>
+                 <p><a href=\"" . $verifyLink . "\">Verify Email</a></p>
+                 <p>This link will expire in 1 hour.</p>";
+        $sent = send_email($email, $subject, $body);
+        $_SESSION['notice'] = $sent ? "Verification email sent." : "Could not send verification email. Use link: " . $verifyLink;
         header("location: /Quesiono/");
     } else {
         echo "Registration Failed!! Try Again";
@@ -312,5 +338,24 @@ if (isset($_POST['signup'])) {
         }
     } else {
         echo "User not found";
+    }
+} else if (isset($_GET['verifyEmail'])) {
+    $token = $_GET['verifyEmail'];
+    if (!$token || strlen($token) !== 64) {
+        exit("Invalid verification link");
+    }
+    $sel = $conn->prepare("SELECT user_id FROM email_verification_tokens WHERE token=? AND used=0 AND expires_at > NOW() LIMIT 1");
+    $sel->bind_param("s", $token);
+    $sel->execute();
+    $res = $sel->get_result();
+    if ($res->num_rows === 1) {
+        $row = $res->fetch_assoc();
+        $uid = (int)$row['user_id'];
+        $upd = $conn->prepare("UPDATE email_verification_tokens SET used=1 WHERE token=?");
+        $upd->bind_param("s", $token);
+        $upd->execute();
+        header("location: /Quesiono/?verified=true");
+    } else {
+        echo "Verification link is invalid or expired";
     }
 }
