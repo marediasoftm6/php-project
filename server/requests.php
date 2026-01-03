@@ -297,14 +297,27 @@ if (isset($_POST['signup'])) {
     $uid = (int)$_SESSION['user']['user_id'];
     $username = $_POST['username'];
     $email = $_POST['email'];
-    $upd = $conn->prepare("UPDATE users SET username=?, email=? WHERE id=?");
-    $upd->bind_param("ssi", $username, $email, $uid);
-    if ($upd->execute()) {
-        $_SESSION['user']['username'] = $username;
-        $_SESSION['user']['email'] = $email;
-        header("location: /Quesiono/?profile=true");
-    } else {
-        echo "Profile update failed, try again";
+    $gender = $_POST['gender'];
+    $birthdate = $_POST['birthdate'];
+    try {
+        $upd = $conn->prepare("UPDATE users SET username=?, email=?, gender=?, birthdate=? WHERE id=?");
+        $upd->bind_param("ssssi", $username, $email, $gender, $birthdate, $uid);
+        if ($upd->execute()) {
+            $_SESSION['user']['username'] = $username;
+            $_SESSION['user']['email'] = $email;
+            header("location: /Quesiono/?profile=true");
+        } else {
+            echo "Profile update failed, try again";
+        }
+    } catch (\Throwable $e) {
+        $upd = $conn->prepare("UPDATE users SET username=? WHERE id=?");
+        $upd->bind_param("si", $username, $uid);
+        if ($upd->execute()) {
+            $_SESSION['user']['username'] = $username;
+            header("location: /Quesiono/?profile=true");
+        } else {
+            echo "Profile update failed, try again";
+        }
     }
 } else if (isset($_POST['changePassword'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {

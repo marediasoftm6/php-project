@@ -3,19 +3,22 @@
     <div class="margin-bottom-15">
         <?php
         include("./common/db.php");
-        $stmt = $conn->prepare("select id, answer, user_id from answers where question_id = ?");
+        $stmt = $conn->prepare("select a.id, a.answer, a.user_id, u.username from answers a join users u on u.id=a.user_id where a.question_id = ?");
         $stmt->bind_param("i", $qid);
         $stmt->execute();
         $result = $stmt->get_result();
         foreach ($result as $row) {
             $answer = htmlspecialchars($row["answer"], ENT_QUOTES, 'UTF-8');
             $id = $row["id"];
+            $ansUserId = $row["user_id"];
+            $username = htmlspecialchars($row["username"], ENT_QUOTES, 'UTF-8');
+            $initial = strtoupper(substr($username, 0, 1));
             $owner = isset($_SESSION['user']['user_id']) && ((int)$_SESSION['user']['user_id'] === (int)$row['user_id']);
             $deleteLink = "./server/requests.php?deleteAnswer=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
             $editLink = "?q-id=$qid&edit-a=$id";
-            echo "<p class='answer-card'>$id. $answer";
+            echo "<div class='answer-card'><div class='user-inline mb-10'><a href='?u-id=$ansUserId&profile=true' class='user-profile-link'><span class='avatar avatar-sm'>$initial</span><span class='user-name'>$username</span></a></div><p>$answer";
             echo $owner ? " <a class='answer-edit' href='$editLink'>Edit</a> <a class='answer-delete' href='$deleteLink'>Delete</a>" : "";
-            echo "</p>";
+            echo "</p></div>";
             if ($owner && isset($_GET['edit-a']) && (int)$_GET['edit-a'] === (int)$id) {
                 ?>
                 <form class="mt-15" action="./server/requests.php" method="post">
