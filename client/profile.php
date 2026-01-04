@@ -69,11 +69,13 @@
                                 <div class="profile-name-row">
                                     <h2><?php echo $displayUsername; ?></h2>
                                     <?php if ($isOwnProfile): ?>
-                                        <a href="?profile_edit=true" class="action-btn-modern">Edit Profile</a>
+                                        <a href="?profile_edit=true" class="action-btn-modern">
+                                            <i class="bi bi-pencil"></i> Edit Profile
+                                        </a>
                                     <?php else: ?>
-                                        <div class="action-group">
+                                        <div class="action-group d-flex gap-2">
                                             <button class="action-btn-modern action-btn-primary">Follow</button>
-                                            <button class="action-btn-modern">Notify me</button>
+                                            <button class="action-btn-modern"><i class="bi bi-bell"></i></button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
@@ -84,120 +86,122 @@
                                 </div>
 
                                 <div class="profile-bio">
-                                    Professional enthusiast and active contributor to the Quesiono community. 
-                                    Always looking for interesting questions to answer and sharing knowledge with others.
+                                    Active member of the Quesiono community since 2024. Passionate about sharing knowledge and helping others find the right answers.
                                 </div>
                             </div>
                         </div>
 
                         <div class="profile-tabs-modern">
-                            <div class="profile-tab active" data-tab="profile">Profile</div>
-                            <div class="profile-tab" data-tab="answers">Answers (<?php echo $acnt; ?>)</div>
-                            <div class="profile-tab" data-tab="questions">Questions (<?php echo $qcnt; ?>)</div>
+                            <div class="profile-tab active" onclick="switchTab('profile')">Profile Info</div>
+                            <div class="profile-tab" onclick="switchTab('answers')">Answers (<?php echo $acnt; ?>)</div>
+                            <div class="profile-tab" onclick="switchTab('questions')">Questions (<?php echo $qcnt; ?>)</div>
                         </div>
 
                         <!-- Tab Contents -->
-                        <div id="profile-tab-content" class="tab-content active">
-                            <div class="sidebar-item">
-                                <span class="sidebar-icon">📧</span>
-                                <span><?php echo ($isOwnProfile || false) ? $email : "Email hidden for privacy"; ?></span>
+                        <div id="profile-tab" class="tab-content active">
+                            <div class="info-grid mt-4">
+                                <div class="info-item mb-3">
+                                    <label class="text-muted small d-block">Email Address</label>
+                                    <span class="fw-semibold"><?php echo $email ?: 'Not provided'; ?></span>
+                                </div>
+                                <div class="info-item mb-3">
+                                    <label class="text-muted small d-block">Gender</label>
+                                    <span class="fw-semibold"><?php echo ucfirst($gender) ?: 'Not provided'; ?></span>
+                                </div>
+                                <div class="info-item mb-3">
+                                    <label class="text-muted small d-block">Birthdate</label>
+                                    <span class="fw-semibold"><?php echo $birthdate ?: 'Not provided'; ?></span>
+                                </div>
                             </div>
-                            <div class="sidebar-item">
-                                <span class="sidebar-icon">👤</span>
-                                <span><?php echo $gender ?: 'Prefer not to say'; ?></span>
-                            </div>
-                            <?php if ($birthdate): ?>
-                            <div class="sidebar-item">
-                                <span class="sidebar-icon">🎂</span>
-                                <span>Born on <?php echo date("F j, Y", strtotime($birthdate)); ?></span>
-                            </div>
-                            <?php endif; ?>
                         </div>
 
-                        <div id="answers-tab-content" class="tab-content">
+                        <div id="answers-tab" class="tab-content">
+                            <h5 class="mb-4">Recent Answers</h5>
                             <?php
-                            $stmt = $conn->prepare("SELECT a.answer, q.title, q.id as qid FROM answers a JOIN questions q ON a.question_id = q.id WHERE a.user_id = ? ORDER BY a.id DESC");
-                            $stmt->bind_param("i", $uid);
-                            $stmt->execute();
-                            $answers = $stmt->get_result();
-                            if ($answers->num_rows > 0):
-                                while ($ans = $answers->fetch_assoc()):
+                            $ansStmt = $conn->prepare("SELECT a.*, q.title as q_title FROM answers a JOIN questions q ON q.id = a.question_id WHERE a.user_id = ? ORDER BY a.id DESC");
+                            $ansStmt->bind_param("i", $uid);
+                            $ansStmt->execute();
+                            $ansRes = $ansStmt->get_result();
+                            if ($ansRes->num_rows === 0) {
+                                echo "<p class='text-muted'>No answers posted yet.</p>";
+                            } else {
+                                foreach ($ansRes as $ans) {
+                                    ?>
+                                    <div class="answer-card mb-3">
+                                        <h6 class="mb-2"><a href="?q-id=<?php echo $ans['question_id']; ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($ans['q_title']); ?></a></h6>
+                                        <p class="small mb-0 text-muted"><?php echo htmlspecialchars(substr($ans['answer'], 0, 150)) . (strlen($ans['answer']) > 150 ? '...' : ''); ?></p>
+                                    </div>
+                                    <?php
+                                }
+                            }
                             ?>
-                                <div class="question-list">
-                                    <h4 style="font-size: 16px;"><a href="?q-id=<?php echo $ans['qid']; ?>"><?php echo htmlspecialchars($ans['title']); ?></a></h4>
-                                    <p style="font-size: 14px; color: #555;"><?php echo htmlspecialchars(substr($ans['answer'], 0, 150)) . '...'; ?></p>
-                                </div>
-                            <?php endwhile; else: ?>
-                                <div class="empty-state">No answers yet.</div>
-                            <?php endif; ?>
                         </div>
 
-                        <div id="questions-tab-content" class="tab-content">
+                        <div id="questions-tab" class="tab-content">
+                            <h5 class="mb-4">Recent Questions</h5>
                             <?php
-                            $stmt = $conn->prepare("SELECT id, title FROM questions WHERE user_id = ? ORDER BY id DESC");
-                            $stmt->bind_param("i", $uid);
-                            $stmt->execute();
-                            $questions = $stmt->get_result();
-                            if ($questions->num_rows > 0):
-                                while ($q = $questions->fetch_assoc()):
+                            $qStmt = $conn->prepare("SELECT q.*, (SELECT COUNT(*) FROM answers WHERE question_id = q.id) as acnt FROM questions q WHERE q.user_id = ? ORDER BY q.id DESC");
+                            $qStmt->bind_param("i", $uid);
+                            $qStmt->execute();
+                            $qRes = $qStmt->get_result();
+                            if ($qRes->num_rows === 0) {
+                                echo "<p class='text-muted'>No questions asked yet.</p>";
+                            } else {
+                                foreach ($qRes as $q) {
+                                    ?>
+                                    <div class="question-list mb-3">
+                                        <h6 class="mb-2"><a href="?q-id=<?php echo $q['id']; ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($q['title']); ?></a></h6>
+                                        <span class="badge-category"><?php echo $q['acnt']; ?> Answers</span>
+                                    </div>
+                                    <?php
+                                }
+                            }
                             ?>
-                                <div class="question-list">
-                                    <h4 style="font-size: 16px;"><a href="?q-id=<?php echo $q['id']; ?>"><?php echo htmlspecialchars($q['title']); ?></a></h4>
-                                </div>
-                            <?php endwhile; else: ?>
-                                <div class="empty-state">No questions asked yet.</div>
-                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
 
                 <!-- Sidebar Content -->
-                <div class=" mt-4 col-12 col-lg-4">
+                <div class="mt-4 col-12 col-lg-4">
                     <div class="profile-sidebar-card">
-                        <div class="sidebar-title">Credentials & Highlights</div>
+                        <h5 class="sidebar-title">Community Activity</h5>
                         <div class="sidebar-item">
-                            <span class="sidebar-icon">📍</span>
-                            <span>Lives in Earth</span>
+                            <i class="bi bi-award text-warning"></i>
+                            <span>Top Contributor</span>
                         </div>
                         <div class="sidebar-item">
-                            <span class="sidebar-icon">🌐</span>
-                            <span>Joined <?php echo date("F Y"); ?></span>
+                            <i class="bi bi-chat-heart text-danger"></i>
+                            <span>15 Helpful Answers</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <i class="bi bi-people text-info"></i>
+                            <span>Joined Dec 2023</span>
                         </div>
                     </div>
 
                     <div class="profile-sidebar-card">
-                        <div class="sidebar-title">Knows about</div>
-                        <div class="knows-about-list">
-                            <div class="topic-item">
-                                <div class="topic-thumb">💡</div>
-                                <div class="topic-info">
-                                    <h4>General Knowledge</h4>
-                                    <span><?php echo $qcnt + $acnt; ?> contributions</span>
-                                </div>
-                            </div>
+                        <h5 class="sidebar-title">Badges</h5>
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge bg-light text-dark border p-2"><i class="bi bi-lightning-fill text-warning"></i> Quick Responder</span>
+                            <span class="badge bg-light text-dark border p-2"><i class="bi bi-check-circle-fill text-success"></i> Problem Solver</span>
                         </div>
                     </div>
                 </div>
             </div>
 
             <script>
-                document.querySelectorAll('.profile-tab').forEach(tab => {
-                    tab.addEventListener('click', () => {
-                        // Remove active class from all tabs and contents
-                        document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                        
-                        // Add active class to clicked tab
-                        tab.classList.add('active');
-                        
-                        // Show corresponding content
-                        const tabId = tab.getAttribute('data-tab');
-                        document.getElementById(tabId + '-tab-content').classList.add('active');
-                    });
-                });
+            function switchTab(tabName) {
+                // Remove active class from all tabs and contents
+                document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                if (event && event.currentTarget) {
+                    event.currentTarget.classList.add('active');
+                }
+                document.getElementById(tabName + '-tab').classList.add('active');
+            }
             </script>
-            <?php
-        }
-    }
-    ?>
+        <?php }
+    } ?>
 </div>

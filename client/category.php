@@ -1,4 +1,4 @@
-<select class="form-control" name="category" id="category">
+<select class="form-select" name="category" id="category" required>
     <option value="">Select A Category</option>
     <?php
     include("./common/db.php");

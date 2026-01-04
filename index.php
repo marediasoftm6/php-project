@@ -12,11 +12,12 @@ if (empty($_SESSION['csrf_token'])) {
     <?php include('./client/commonFiles.php') ?>
 </head>
 
-<body style="padding-inline: 20px;">
+<body>
     <?php
     include('./client/header.php');
     ?>
 
+    <main class="container py-4">
     <?php
     if (isset($_GET['signup']) && !isset($_SESSION['user']['username'])) {
         include('./client/signup.php');
@@ -53,6 +54,7 @@ if (empty($_SESSION['csrf_token'])) {
         include('./client/questions.php');
     }
     ?>
+    </main>
 </body>
 
 </html>
