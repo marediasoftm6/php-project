@@ -52,12 +52,12 @@
 
             if ($showHero && !isset($_GET['search']) && !isset($_GET['latest']) && !isset($_GET['u-id']) && !isset($_GET['c-id'])) {
             ?>
-                <div class="hero-section mb-5 p-5 rounded-4 text-center" style="background: linear-gradient(135deg, var(--primary) 0%, #4f46e5 100%); color: #fff;">
-                    <h1 class="display-4 fw-bold mb-3">Share Knowledge, Find Answers</h1>
+                <div class="hero-section mb-5 p-5 rounded-4 text-center" style="background: var(--gradient); color: var(--white);">
+                    <h1 class="mb-3">Share Knowledge, Find Answers</h1>
                     <p class="lead mb-4 opacity-90">Join the Quesiono community and help others while learning new things.</p>
                     <?php if (!isset($_SESSION['user']['username'])) { ?>
                         <div class="d-flex justify-content-center gap-3">
-                            <a href="?signup=true" class="btn btn-light btn-lg px-4 fw-bold" style="color: var(--primary);">Get Started</a>
+                            <a href="?signup=true" class="btn btn-outline-light btn-lg px-4">Get Started</a>
                             <a href="?about=true" class="btn btn-outline-light btn-lg px-4">Learn More</a>
                         </div>
                     <?php } else { ?>

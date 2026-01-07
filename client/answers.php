@@ -44,7 +44,7 @@
                     <?php } ?>
                 </div>
 
-                <div class="answer-content" style="color: #374151; line-height: 1.7; white-space: pre-wrap; font-size: 1.05rem;"><?php echo $answer; ?></div>
+                <div class="answer-content" style="color: var(--text-muted); line-height: 1.7; white-space: pre-wrap; font-size: 1.05rem;"><?php echo $answer; ?></div>
 
                 <?php if ($owner && isset($_GET['edit-a']) && (int)$_GET['edit-a'] === (int)$id) { ?>
                     <div class="mt-4 p-3 bg-light rounded-3">

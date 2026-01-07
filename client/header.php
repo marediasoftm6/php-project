@@ -1,13 +1,13 @@
-<nav class="navbar navbar-expand-lg sticky-top navbar-light">
+<nav class="navbar navbar-expand-lg sticky-top navbar-light shadow-sm">
   <div class="container">
     <a class="navbar-brand" href="./">
-      <img src="./public/logo.png" alt="Quesiono World Logo" class="websiteLogo">
+      <img src="./public/transparent-logo.png" alt="Quesiono World Logo" class="websiteLogo">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto mb-2 mb-lg-0 navbar-text d-flex flex-lg-row gap-lg-4 align-items-center">
+      <ul class="navbar-nav mb-2 mb-lg-0 navbar-text d-flex flex-lg-row gap-lg-4 align-items-center">
         <?php
         $current_page = basename($_SERVER['PHP_SELF']);
         $is_home = !isset($_GET['about']) && !isset($_GET['askQuestion']) && !isset($_GET['categories']) && !isset($_GET['latest']) && !isset($_GET['profile']) && !isset($_GET['u-id']) && !isset($_GET['q-id']);
@@ -30,7 +30,7 @@
           </li>
         <?php } ?>
       </ul>
-      <div class="d-flex align-items-center ms-auto gap-3">
+      <div class="d-flex align-items-center gap-3">
         <form class="search-wrap d-none d-lg-block" action="" role="search">
           <span class="search-icon" aria-hidden="true">
           </span>

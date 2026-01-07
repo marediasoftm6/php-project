@@ -8,8 +8,11 @@ if (empty($_SESSION['csrf_token'])) {
 <html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quesiono</title>
     <?php include('./client/commonFiles.php') ?>
+    <link rel="icon" href="./public/colored-logo.png" type="image/x-icon">
 </head>
 
 <body>

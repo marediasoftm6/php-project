@@ -41,7 +41,7 @@
 
                 <h1 class="mb-4" style="font-weight: 800; color: var(--text); line-height: 1.3; font-size: 2rem;"><?php echo $titleSafe; ?></h1>
                 
-                <div class="question-body mb-4" style="font-size: 1.1rem; color: #374151; line-height: 1.8; white-space: pre-wrap;"><?php echo $descSafe; ?></div>
+                <div class="question-body mb-4" style="font-size: 1.1rem; color: var(--text-muted); line-height: 1.8; white-space: pre-wrap;"><?php echo $descSafe; ?></div>
 
                 <?php if ($owner && !isset($_GET['edit-q'])) { ?>
                     <div class="mt-4 pt-3 border-top d-flex gap-2">
