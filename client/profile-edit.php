@@ -9,22 +9,17 @@
         echo "<div class='text-center p-4'><p>Please <a href='?login=true'>login</a> to edit your profile.</p></div>";
     } else {
         $uid = (int)$_SESSION['user']['user_id'];
-        try {
-            $stmt = $conn->prepare("SELECT username, email, gender, birthdate FROM users WHERE id=? LIMIT 1");
-            $stmt->bind_param("i", $uid);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            $row = $res->fetch_assoc();
-        } catch (\Throwable $e) {
-            $stmt = $conn->prepare("SELECT username FROM users WHERE id=? LIMIT 1");
-            $stmt->bind_param("i", $uid);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            $row = $res->fetch_assoc();
-            $row['email'] = '';
-            $row['gender'] = '';
-            $row['birthdate'] = '';
-        }
+        
+        // Ensure columns exist
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER username");
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) AFTER email");
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE AFTER gender");
+
+        $stmt = $conn->prepare("SELECT username, email, gender, birthdate FROM users WHERE id=? LIMIT 1");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res->fetch_assoc();
         ?>
         <form method="post" action="./server/requests.php">
             <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">

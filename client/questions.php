@@ -61,7 +61,10 @@
                             <a href="?about=true" class="btn btn-outline-light btn-lg px-4">Learn More</a>
                         </div>
                     <?php } else { ?>
-                        <a href="?askQuestion=true" class="btn btn-light btn-lg px-4 fw-bold" style="color: var(--primary);">Ask a Question</a>
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="?askQuestion=true" class="btn btn-outline-light btn-lg px-4 fw-regular">Ask a Question</a>
+                            <a href="?post=true" class="btn btn-outline-light btn-lg px-4 fw-regular">Post Articles</a>
+                        </div>
                     <?php } ?>
                 </div>
             <?php

@@ -20,7 +20,7 @@ if (empty($_SESSION['csrf_token'])) {
     include('./client/header.php');
     ?>
 
-    <main class="container py-4">
+    <main class="<?php echo isset($_GET['about']) ? '' : 'container py-4'; ?>">
     <?php
     if (isset($_GET['signup']) && !isset($_SESSION['user']['username'])) {
         include('./client/signup.php');
@@ -49,6 +49,14 @@ if (empty($_SESSION['csrf_token'])) {
         include('./client/questions.php');
     } else if (isset($_GET['about'])) {
         include('./client/about.php');
+    } else if (isset($_GET['post'])) {
+        include('./client/post.php');
+    } else if (isset($_GET['post-id'])) {
+        include('./client/post-details.php');
+    } else if (isset($_GET['all-posts'])) {
+        include('./client/all-posts.php');
+    } else if (isset($_GET['my-posts'])) {
+        include('./client/my-posts.php');
     } else if (isset($_GET['profile_edit'])) {
         include('./client/profile-edit.php');
     } else if (isset($_GET['settings'])) {

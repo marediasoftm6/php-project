@@ -19,22 +19,17 @@
     if ($uid === 0) {
         echo "<div class='profile-card-modern text-center'><p>Please <a href='?login=true'>login</a> to view your profile.</p></div>";
     } else {
-        try {
-            $stmt = $conn->prepare("SELECT username, email, gender, birthdate FROM users WHERE id=? LIMIT 1");
-            $stmt->bind_param("i", $uid);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            $row = $res->fetch_assoc();
-        } catch (\Throwable $e) {
-            $stmt = $conn->prepare("SELECT username FROM users WHERE id=? LIMIT 1");
-            $stmt->bind_param("i", $uid);
-            $stmt->execute();
-            $res = $stmt->get_result();
-            $row = $res->fetch_assoc();
-            $row['email'] = '';
-            $row['gender'] = '';
-            $row['birthdate'] = '';
-        }
+        // Ensure columns exist (One-time check per session/view if needed)
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER username");
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) AFTER email");
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE AFTER gender");
+        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER password");
+
+        $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at FROM users WHERE id=? LIMIT 1");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        $row = $res->fetch_assoc();
 
         if (!$row) {
             echo "<div class='profile-card-modern text-center'><p>User not found.</p></div>";
@@ -44,6 +39,9 @@
             $email = htmlspecialchars($row['email'] ?? '', ENT_QUOTES, 'UTF-8');
             $gender = htmlspecialchars($row['gender'] ?? '', ENT_QUOTES, 'UTF-8');
             $birthdate = htmlspecialchars($row['birthdate'] ?? '', ENT_QUOTES, 'UTF-8');
+            $createdAt = $row['created_at'] ?? date('Y-m-d H:i:s');
+            $joinedDate = date('M Y', strtotime($createdAt));
+            $joinedYear = date('Y', strtotime($createdAt));
             
             $initial = strtoupper(substr($username, 0, 1));
 
@@ -57,6 +55,11 @@
             $acntStmt->bind_param("i", $uid);
             $acntStmt->execute();
             $acnt = $acntStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
+
+            $pcntStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM posts WHERE user_id=?");
+            $pcntStmt->bind_param("i", $uid);
+            $pcntStmt->execute();
+            $pcnt = $pcntStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
             ?>
 
             <div class="row">
@@ -83,10 +86,11 @@
                                 <div class="profile-stats-row">
                                     <span class="stat-item"><span class="stat-value"><?php echo $qcnt; ?></span> Questions</span>
                                     <span class="stat-item"><span class="stat-value"><?php echo $acnt; ?></span> Answers</span>
+                                    <span class="stat-item"><span class="stat-value"><?php echo $pcnt; ?></span> Posts</span>
                                 </div>
 
                                 <div class="profile-bio">
-                                    Active member of the Quesiono community since 2024. Passionate about sharing knowledge and helping others find the right answers.
+                                    Active member of the Quesiono community since <?php echo $joinedYear; ?>. Passionate about sharing knowledge and helping others find the right answers.
                                 </div>
                             </div>
                         </div>
@@ -95,6 +99,7 @@
                             <div class="profile-tab active" onclick="switchTab('profile')">Profile Info</div>
                             <div class="profile-tab" onclick="switchTab('answers')">Answers (<?php echo $acnt; ?>)</div>
                             <div class="profile-tab" onclick="switchTab('questions')">Questions (<?php echo $qcnt; ?>)</div>
+                            <div class="profile-tab" onclick="switchTab('posts')">Posts (<?php echo $pcnt; ?>)</div>
                         </div>
 
                         <!-- Tab Contents -->
@@ -158,6 +163,44 @@
                             }
                             ?>
                         </div>
+
+                        <div id="posts-tab" class="tab-content">
+                            <h5 class="mb-4">Recent Rich Posts</h5>
+                            <?php
+                            $pStmt = $conn->prepare("SELECT * FROM posts WHERE user_id = ? ORDER BY id DESC");
+                            $pStmt->bind_param("i", $uid);
+                            $pStmt->execute();
+                            $pRes = $pStmt->get_result();
+                            if ($pRes->num_rows === 0) {
+                                echo "<p class='text-muted'>No rich posts published yet.</p>";
+                            } else {
+                                foreach ($pRes as $p) {
+                                    $templateIcon = 'bi-journal-text';
+                                    if($p['template'] == 'guide') $templateIcon = 'bi-list-ol';
+                                    else if($p['template'] == 'technical') $templateIcon = 'bi-code-square';
+                                    else if($p['template'] == 'story') $templateIcon = 'bi-chat-quote';
+                                    ?>
+                                    <div class="answer-card mb-3">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi <?php echo $templateIcon; ?> text-primary me-2"></i>
+                                            <h6 class="mb-0">
+                                                <a href="?post-id=<?php echo $p['id']; ?>" class="text-decoration-none text-primary">
+                                                    <?php echo htmlspecialchars($p['title']); ?>
+                                                </a>
+                                            </h6>
+                                        </div>
+                                        <?php if (!empty($p['subtitle'])): ?>
+                                            <p class="small fw-bold text-dark mb-1"><?php echo htmlspecialchars($p['subtitle']); ?></p>
+                                        <?php endif; ?>
+                                        <p class="small mb-0 text-muted">
+                                            <?php echo htmlspecialchars(substr(strip_tags($p['content']), 0, 150)) . (strlen(strip_tags($p['content'])) > 150 ? '...' : ''); ?>
+                                        </p>
+                                    </div>
+                                    <?php
+                                }
+                            }
+                            ?>
+                        </div>
                     </div>
                 </div>
 
@@ -165,17 +208,19 @@
                 <div class="mt-4 col-12 col-lg-4">
                     <div class="profile-sidebar-card">
                         <h5 class="sidebar-title">Community Activity</h5>
+                        <?php if ($acnt >= 5): ?>
                         <div class="sidebar-item">
                             <i class="bi bi-award text-warning"></i>
                             <span>Top Contributor</span>
                         </div>
+                        <?php endif; ?>
                         <div class="sidebar-item">
                             <i class="bi bi-chat-heart text-danger"></i>
-                            <span>15 Helpful Answers</span>
+                            <span><?php echo $acnt; ?> Helpful Answers</span>
                         </div>
                         <div class="sidebar-item">
                             <i class="bi bi-people text-info"></i>
-                            <span>Joined Dec 2023</span>
+                            <span>Joined <?php echo $joinedDate; ?></span>
                         </div>
                     </div>
 

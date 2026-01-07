@@ -8,10 +8,37 @@ if (isset($_POST['signup'])) {
     }
     $username = $_POST['username'];
     $email = $_POST['email'];
+    $gender = $_POST['gender'];
     $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'];
+
+    if ($password !== $confirm_password) {
+        exit("Passwords do not match");
+    }
+
+    // Check if username already exists
+    $checkUser = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+    $checkUser->bind_param("s", $username);
+    $checkUser->execute();
+    if ($checkUser->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "Username is already taken";
+        header("location: /Quesiono/?signup=true");
+        exit;
+    }
+
+    // Check if email already exists
+    $checkEmail = $conn->prepare("SELECT id FROM users WHERE email = ? LIMIT 1");
+    $checkEmail->bind_param("s", $email);
+    $checkEmail->execute();
+    if ($checkEmail->get_result()->num_rows > 0) {
+        $_SESSION['error'] = "Email is already taken";
+        header("location: /Quesiono/?signup=true");
+        exit;
+    }
+
     $storePass = (defined('AUTH_HASH_ENABLED') && AUTH_HASH_ENABLED) ? password_hash($password, PASSWORD_DEFAULT) : $password;
-    $stmt = $conn->prepare("INSERT INTO `users` (`username`, `email`, `password`) VALUES (?, ?, ?)");
-    $stmt->bind_param("sss", $username, $email, $storePass);
+    $stmt = $conn->prepare("INSERT INTO `users` (`username`, `email`, `gender`, `password`) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("ssss", $username, $email, $gender, $storePass);
     if ($stmt->execute()) {
         $_SESSION["user"] = ["username" => $username, "email" => $email, "user_id" => $stmt->insert_id];
         // Email verification token setup
@@ -48,12 +75,14 @@ if (isset($_POST['signup'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
     }
-    $username = $_POST['username'];
+    if (isset($_SESSION['user'])) {
+        header("location: /Quesiono/");
+        exit;
+    }
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $user_id = "";
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email=? AND username=? LIMIT 1");
-    $stmt->bind_param("ss", $email, $username);
+    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email=? LIMIT 1");
+    $stmt->bind_param("s", $email);
     $stmt->execute();
     $res = $stmt->get_result();
     if ($res->num_rows === 1) {
@@ -62,12 +91,12 @@ if (isset($_POST['signup'])) {
         if ($valid) {
             $_SESSION["user"] = ["username" => $row['username'], "email" => $email, "user_id" => $row['id']];
             header("location: /Quesiono/");
-        } else {
-            echo "Login Failed!! Try Again";
+            exit;
         }
-    } else {
-        echo "Login Failed!! Try Again";
     }
+    $_SESSION['error'] = "Login Failed!! Try Again";
+    header("location: /Quesiono/?login=true");
+    exit;
 } else if (isset($_GET['logout'])) {
     session_unset();
     header("location: /Quesiono/");
@@ -118,6 +147,55 @@ if (isset($_POST['signup'])) {
         exit;
     } else {
         echo "Answer not added, try again!: " . $query->error;
+    }
+} else if (isset($_POST["createRichPost"])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/?login=true");
+        exit;
+    }
+
+    $title = $_POST['title'];
+    $subtitle = $_POST['subtitle'];
+    $content = $_POST['content'];
+    $template = $_POST['template'];
+    $category_id = (!empty($_POST['category']) && is_numeric($_POST['category'])) ? (int)$_POST['category'] : null;
+    $user_id = $_SESSION['user']['user_id'];
+
+    // Generate unique SEO-friendly slug
+    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $title)));
+    $slug = preg_replace('/-+/', '-', $slug); // Remove double dashes
+    $slug = $slug . '-' . substr(uniqid(), -5); // Add short unique ID instead of timestamp for cleaner URLs
+
+    // Handle links from dynamic inputs
+    $links = [];
+    if (isset($_POST['link_texts']) && isset($_POST['link_urls'])) {
+        foreach ($_POST['link_texts'] as $index => $text) {
+            $url = $_POST['link_urls'][$index];
+            if (!empty($text) && !empty($url)) {
+                // Basic URL cleanup
+                if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
+                    $url = "https://" . $url;
+                }
+                $links[] = ['text' => htmlspecialchars($text), 'url' => filter_var($url, FILTER_SANITIZE_URL)];
+            }
+        }
+    }
+    $links_json = json_encode($links);
+    
+    $stmt = $conn->prepare("INSERT INTO posts (user_id, category_id, title, slug, subtitle, content, links, template) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iissssss", $user_id, $category_id, $title, $slug, $subtitle, $content, $links_json, $template);
+
+    if ($stmt->execute()) {
+        $_SESSION['notice'] = "Your rich post has been published successfully!";
+        header("location: /Quesiono/");
+        exit;
+    } else {
+        $_SESSION['error'] = "Post creation failed: " . $stmt->error;
+        header("location: /Quesiono/?post=true");
+        exit;
     }
 } else if (isset($_GET['delete'])) {
     if (!isset($_GET['csrf']) || $_GET['csrf'] !== $_SESSION['csrf_token']) {
@@ -299,25 +377,21 @@ if (isset($_POST['signup'])) {
     $email = $_POST['email'];
     $gender = $_POST['gender'];
     $birthdate = $_POST['birthdate'];
-    try {
-        $upd = $conn->prepare("UPDATE users SET username=?, email=?, gender=?, birthdate=? WHERE id=?");
-        $upd->bind_param("ssssi", $username, $email, $gender, $birthdate, $uid);
-        if ($upd->execute()) {
-            $_SESSION['user']['username'] = $username;
-            $_SESSION['user']['email'] = $email;
-            header("location: /Quesiono/?profile=true");
-        } else {
-            echo "Profile update failed, try again";
-        }
-    } catch (\Throwable $e) {
-        $upd = $conn->prepare("UPDATE users SET username=? WHERE id=?");
-        $upd->bind_param("si", $username, $uid);
-        if ($upd->execute()) {
-            $_SESSION['user']['username'] = $username;
-            header("location: /Quesiono/?profile=true");
-        } else {
-            echo "Profile update failed, try again";
-        }
+
+    // Ensure columns exist
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER username");
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) AFTER email");
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE AFTER gender");
+    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER password");
+
+    $upd = $conn->prepare("UPDATE users SET username=?, email=?, gender=?, birthdate=? WHERE id=?");
+    $upd->bind_param("ssssi", $username, $email, $gender, $birthdate, $uid);
+    if ($upd->execute()) {
+        $_SESSION['user']['username'] = $username;
+        $_SESSION['user']['email'] = $email;
+        header("location: /Quesiono/?profile=true");
+    } else {
+        echo "Profile update failed, try again";
     }
 } else if (isset($_POST['changePassword'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {

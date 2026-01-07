@@ -13,9 +13,6 @@
         $is_home = !isset($_GET['about']) && !isset($_GET['askQuestion']) && !isset($_GET['categories']) && !isset($_GET['latest']) && !isset($_GET['profile']) && !isset($_GET['u-id']) && !isset($_GET['q-id']);
         ?>
         <li class="nav-item">
-          <a class="nav-link <?php echo isset($_GET['about']) ? 'active' : ''; ?>" href="?about=true">About</a>
-        </li>
-        <li class="nav-item">
           <a class="nav-link <?php echo isset($_GET['categories']) ? 'active' : ''; ?>" href="?categories=true">Categories</a>
         </li>
         <li class="nav-item">
@@ -25,10 +22,43 @@
           <li class="nav-item">
             <a class="nav-link <?php echo isset($_GET['askQuestion']) ? 'active' : ''; ?>" href="?askQuestion=true">Ask Question</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="?u-id=<?php echo $_SESSION['user']['user_id'] ?>">My Q&A</a>
-          </li>
         <?php } ?>
+        <li class="nav-item dropdown explore-dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Explore
+          </a>
+          <ul class="dropdown-menu shadow-lg border-0 mt-2">
+            <li><a class="dropdown-item py-2 <?php echo isset($_GET['about']) ? 'active' : ''; ?>" href="?about=true">
+              <i class="bi bi-info-circle me-2"></i>About
+            </a></li>
+            <?php if (isset($_SESSION['user']['username'])) { ?>
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="?u-id=<?php echo $_SESSION['user']['user_id'] ?>">
+                <i class="bi bi-chat-dots me-2"></i>My Q&A
+              </a></li>
+            <?php } ?>
+          </ul>
+        </li>
+
+        <li class="nav-item dropdown explore-dropdown">
+          <a class="nav-link dropdown-toggle <?php echo (isset($_GET['post']) || isset($_GET['all-posts']) || isset($_GET['my-posts'])) ? 'active' : ''; ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Posts
+          </a>
+          <ul class="dropdown-menu shadow-lg border-0 mt-2">
+            <?php if (isset($_SESSION['user']['username'])) { ?>
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['post']) ? 'active' : ''; ?>" href="?post=true">
+                <i class="bi bi-plus-circle me-2"></i>Add Post
+              </a></li>
+            <?php } ?>
+            <li><a class="dropdown-item py-2 <?php echo isset($_GET['all-posts']) ? 'active' : ''; ?>" href="?all-posts=true">
+              <i class="bi bi-grid-3x3-gap me-2"></i>All Posts
+            </a></li>
+            <?php if (isset($_SESSION['user']['username'])) { ?>
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['my-posts']) ? 'active' : ''; ?>" href="?my-posts=true">
+                <i class="bi bi-person-badge me-2"></i>My Posts
+              </a></li>
+            <?php } ?>
+          </ul>
+        </li>
       </ul>
       <div class="d-flex align-items-center gap-3">
         <form class="search-wrap d-none d-lg-block" action="" role="search">

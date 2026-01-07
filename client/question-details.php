@@ -50,7 +50,7 @@
                         </a>
                         <a href="./server/requests.php?deleteQuestion=<?php echo $qid; ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" 
                            onclick="return confirm('Are you sure you want to delete this question?')"
-                           class="btn btn-sm btn-outline-danger px-3">
+                           class="btn btn-sm btn-outline-danger px-3 align-content-center">
                             <i class="bi bi-trash me-1"></i> Delete
                         </a>
                     </div>

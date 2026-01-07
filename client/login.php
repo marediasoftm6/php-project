@@ -3,20 +3,30 @@
         <h1>Welcome Back</h1>
         <p>Login to your Quesiono account</p>
     </div>
-    <form method="post" action="./server/requests.php">
-        <div class="form-group">
-            <label class="form-label" for="username">Username</label>
-            <input type="text" name="username" class="form-control" id="username" placeholder="Enter your username" required>
-        </div>
 
-        <div class="form-group">
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger mb-4">
+            <?php 
+                echo $_SESSION['error']; 
+                unset($_SESSION['error']);
+            ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="post" action="./server/requests.php">
+        <div class="form-group mb-4">
             <label class="form-label" for="emailaddress">Email Address</label>
             <input type="email" name="email" class="form-control" id="emailaddress" placeholder="name@example.com" required>
         </div>
 
-        <div class="form-group">
+        <div class="form-group mb-4">
             <label class="form-label" for="password">Password</label>
-            <input type="password" name="password" class="form-control" id="password" placeholder="Enter your password" required>
+            <div class="input-group">
+                <input type="password" name="password" class="form-control border-end-0" id="password" placeholder="Enter your password" required>
+                <span class="input-group-text bg-white border-start-0 cursor-pointer" onclick="togglePassword('password', this)">
+                    <i class="bi bi-eye"></i>
+                </span>
+            </div>
         </div>
 
         <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
@@ -29,4 +39,18 @@
         </div>
     </form>
 </div>
+
+<script>
+function togglePassword(inputId, iconElement) {
+    const input = document.getElementById(inputId);
+    const icon = iconElement.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+}
+</script>
 
