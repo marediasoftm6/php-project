@@ -112,46 +112,8 @@
         <?php } ?>
     </div>
 
+    <!-- Sidebar Column -->
     <div class="col-12 col-lg-4 mt-4 mt-lg-0">
-        <div class="sidebar-sticky" style="position: sticky; top: 100px;">
-            <?php
-            if (isset($cid)) {
-                $catStmt = $conn->prepare("select * from category where id=?");
-                $catStmt->bind_param("i", $cid);
-                $catStmt->execute();
-                $catResult = $catStmt->get_result();
-                $catRow = $catResult->fetch_assoc();
-                
-                if ($catRow) {
-                    ?>
-                    <div class="mb-4">
-                        <h5 class="mb-3 text-muted" style="text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.05em; font-weight: 700;">Category</h5>
-                        <span class="badge-category"><?php echo htmlspecialchars($catRow['name'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    </div>
-
-                    <h5 class="mb-3" style="font-weight: 700;">Related Questions</h5>
-                    <?php
-                    $relStmt = $conn->prepare("select id, title from questions where category_id=? and id!=? order by id desc limit 5");
-                    $relStmt->bind_param("ii", $cid, $qid);
-                    $relStmt->execute();
-                    $relResult = $relStmt->get_result();
-                    
-                    if ($relResult->num_rows > 0) {
-                        foreach ($relResult as $row) {
-                            $title = htmlspecialchars($row["title"], ENT_QUOTES, 'UTF-8');
-                            $id = $row["id"];
-                            ?>
-                            <div class="related-questions">
-                                <h4><a href="?q-id=<?php echo $id; ?>"><?php echo $title; ?></a></h4>
-                            </div>
-                            <?php
-                        }
-                    } else {
-                        echo "<p class='text-muted small'>No related questions found.</p>";
-                    }
-                }
-            }
-            ?>
-        </div>
+        <?php include('sidebar.php'); ?>
     </div>
 </div>

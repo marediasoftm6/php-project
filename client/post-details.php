@@ -33,9 +33,9 @@ $template = $post['template'] ?: 'article';
 $formattedContent = nl2br($post['content']);
 ?>
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
+<div class="row g-4">
+    <!-- Main Content Column -->
+    <div class="col-12 col-lg-8">
             <!-- Template Rendering -->
             <div class="post-detail-wrapper bg-white shadow-sm rounded-4 overflow-hidden">
                 <?php if ($template == 'article'): ?>
@@ -131,8 +131,12 @@ $formattedContent = nl2br($post['content']);
                 </a>
             </div>
         </div>
+
+        <!-- Sidebar Column -->
+        <div class="col-12 col-lg-4">
+            <?php include('sidebar.php'); ?>
+        </div>
     </div>
-</div>
 
 <style>
 /* Ensure detail page matches preview styles */

@@ -2,6 +2,64 @@
 session_start();
 include("../common/db.php");
 include("config.php");
+
+if (isset($_GET['toggleFollow'])) {
+    if (!isset($_SESSION['user']['user_id'])) {
+        echo json_encode(['success' => false, 'error' => 'not_logged_in']);
+        exit;
+    }
+    $followerId = $_SESSION['user']['user_id'];
+    $followingId = (int)$_GET['toggleFollow'];
+
+    if ($followerId === $followingId) {
+        echo json_encode(['success' => false, 'error' => 'self_follow']);
+        exit;
+    }
+
+    $check = $conn->prepare("SELECT id FROM follows WHERE follower_id = ? AND following_id = ?");
+    $check->bind_param("ii", $followerId, $followingId);
+    $check->execute();
+    $res = $check->get_result();
+
+    if ($res->num_rows > 0) {
+        // Unfollow
+        $del = $conn->prepare("DELETE FROM follows WHERE follower_id = ? AND following_id = ?");
+        $del->bind_param("ii", $followerId, $followingId);
+        $del->execute();
+        echo json_encode(['success' => true, 'status' => 'unfollowed']);
+    } else {
+        // Follow
+        $ins = $conn->prepare("INSERT INTO follows (follower_id, following_id) VALUES (?, ?)");
+        $ins->bind_param("ii", $followerId, $followingId);
+        $ins->execute();
+
+        // Create Notification
+        $followerName = $_SESSION['user']['username'];
+        $msg = "<strong>" . htmlspecialchars($followerName) . "</strong> started following you.";
+        $notif = $conn->prepare("INSERT INTO notifications (user_id, type, source_id, message) VALUES (?, 'follow', ?, ?)");
+        $notif->bind_param("iis", $followingId, $followerId, $msg);
+        $notif->execute();
+
+        echo json_encode(['success' => true, 'status' => 'followed']);
+    }
+    exit;
+}
+
+if (isset($_GET['markRead'])) {
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/");
+        exit;
+    }
+    $uid = $_SESSION['user']['user_id'];
+    if ($_GET['markRead'] === 'all') {
+        $upd = $conn->prepare("UPDATE notifications SET is_read = 1 WHERE user_id = ?");
+        $upd->bind_param("i", $uid);
+        $upd->execute();
+    }
+    header("location: " . $_SERVER['HTTP_REFERER']);
+    exit;
+}
+
 if (isset($_POST['signup'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
@@ -377,12 +435,6 @@ if (isset($_POST['signup'])) {
     $email = $_POST['email'];
     $gender = $_POST['gender'];
     $birthdate = $_POST['birthdate'];
-
-    // Ensure columns exist
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER username");
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) AFTER email");
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE AFTER gender");
-    $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER password");
 
     $upd = $conn->prepare("UPDATE users SET username=?, email=?, gender=?, birthdate=? WHERE id=?");
     $upd->bind_param("ssssi", $username, $email, $gender, $birthdate, $uid);

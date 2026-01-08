@@ -1,6 +1,5 @@
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12 col-lg-8">
+<div class="row g-4">
+    <div class="col-12 col-lg-8">
             <?php
             include("./common/db.php");
             
@@ -56,17 +55,20 @@
                     <h1 class="mb-3">Share Knowledge, Find Answers</h1>
                     <p class="lead mb-4 opacity-90">Join the Quesiono community and help others while learning new things.</p>
                     <?php if (!isset($_SESSION['user']['username'])) { ?>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="?signup=true" class="btn btn-outline-light btn-lg px-4">Get Started</a>
-                            <a href="?about=true" class="btn btn-outline-light btn-lg px-4">Learn More</a>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="?signup=true" class="btn btn-outline-light btn-lg px-4 rounded-pill">Get Started</a>
+                            <a href="?about=true" class="btn btn-light btn-lg px-4 rounded-pill text-primary">Learn More</a>
                         </div>
                     <?php } else { ?>
-                        <div class="d-flex justify-content-center gap-3">
-                            <a href="?askQuestion=true" class="btn btn-outline-light btn-lg px-4 fw-regular">Ask a Question</a>
-                            <a href="?post=true" class="btn btn-outline-light btn-lg px-4 fw-regular">Post Articles</a>
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="?askQuestion=true" class="btn btn-outline-light btn-lg px-4 rounded-pill fw-regular">Ask a Question</a>
+                            <a href="?post=true" class="btn btn-light btn-lg px-4 rounded-pill text-primary fw-regular">Post Articles</a>
                         </div>
                     <?php } ?>
                 </div>
+
+                <!-- Stats Section -->
+                <?php include('stats.php'); ?>
             <?php
             }
             
@@ -128,9 +130,10 @@
             }
             ?>
         </div>
-        <div class="col-12 col-lg-4">
-            <?php include("categoryList.php") ?>
+        
+        <!-- Sidebar Column -->
+        <div class="col-12 col-lg-4 mt-4 mt-lg-0">
+            <?php include('sidebar.php'); ?>
         </div>
     </div>
-</div>
 

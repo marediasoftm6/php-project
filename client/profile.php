@@ -19,12 +19,6 @@
     if ($uid === 0) {
         echo "<div class='profile-card-modern text-center'><p>Please <a href='?login=true'>login</a> to view your profile.</p></div>";
     } else {
-        // Ensure columns exist (One-time check per session/view if needed)
-        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS email VARCHAR(255) AFTER username");
-        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50) AFTER email");
-        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS birthdate DATE AFTER gender");
-        $conn->query("ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER password");
-
         $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at FROM users WHERE id=? LIMIT 1");
         $stmt->bind_param("i", $uid);
         $stmt->execute();
@@ -60,6 +54,20 @@
             $pcntStmt->bind_param("i", $uid);
             $pcntStmt->execute();
             $pcnt = $pcntStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
+
+            // Follow Stats
+            $isFollowing = false;
+            if (isset($_SESSION['user']['user_id'])) {
+                $checkFollow = $conn->prepare("SELECT id FROM follows WHERE follower_id = ? AND following_id = ?");
+                $checkFollow->bind_param("ii", $_SESSION['user']['user_id'], $uid);
+                $checkFollow->execute();
+                $isFollowing = $checkFollow->get_result()->num_rows > 0;
+            }
+
+            $followersStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM follows WHERE following_id = ?");
+            $followersStmt->bind_param("i", $uid);
+            $followersStmt->execute();
+            $followersCount = $followersStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
             ?>
 
             <div class="row">
@@ -77,13 +85,16 @@
                                         </a>
                                     <?php else: ?>
                                         <div class="action-group d-flex gap-2">
-                                            <button class="action-btn-modern action-btn-primary">Follow</button>
-                                            <button class="action-btn-modern"><i class="bi bi-bell"></i></button>
+                                            <button id="followBtn" onclick="toggleFollow(<?php echo $uid; ?>)" class="action-btn-modern <?php echo $isFollowing ? 'btn-following' : 'action-btn-primary'; ?>">
+                                                <?php echo $isFollowing ? 'Following' : 'Follow'; ?>
+                                            </button>
+                                            <button class="action-btn-modern"><i class="bi bi-bell<?php echo $isFollowing ? '-fill text-primary' : ''; ?>"></i></button>
                                         </div>
                                     <?php endif; ?>
                                 </div>
                                 
                                 <div class="profile-stats-row">
+                                    <span class="stat-item"><span class="stat-value" id="followersCount"><?php echo $followersCount; ?></span> Followers</span>
                                     <span class="stat-item"><span class="stat-value"><?php echo $qcnt; ?></span> Questions</span>
                                     <span class="stat-item"><span class="stat-value"><?php echo $acnt; ?></span> Answers</span>
                                     <span class="stat-item"><span class="stat-value"><?php echo $pcnt; ?></span> Posts</span>
@@ -246,6 +257,43 @@
                 }
                 document.getElementById(tabName + '-tab').classList.add('active');
             }
+
+            function toggleFollow(followingId) {
+            const btn = document.getElementById('followBtn');
+            const countSpan = document.getElementById('followersCount');
+            
+            // Disable button during request to prevent multiple clicks
+            btn.disabled = true;
+            btn.style.transform = 'scale(0.95)';
+            
+            fetch('./server/requests.php?toggleFollow=' + followingId)
+                .then(response => response.json())
+                .then(data => {
+                    btn.disabled = false;
+                    btn.style.transform = 'scale(1)';
+                    
+                    if (data.success) {
+                        if (data.status === 'followed') {
+                            btn.innerText = 'Following';
+                            btn.classList.remove('action-btn-primary');
+                            btn.classList.add('btn-following');
+                            countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                        } else {
+                            btn.innerText = 'Follow';
+                            btn.classList.remove('btn-following');
+                            btn.classList.add('action-btn-primary');
+                            countSpan.innerText = parseInt(countSpan.innerText) - 1;
+                        }
+                    } else if (data.error === 'not_logged_in') {
+                        window.location.href = '?login=true';
+                    }
+                })
+                .catch(err => {
+                    btn.disabled = false;
+                    btn.style.transform = 'scale(1)';
+                    console.error('Error toggling follow:', err);
+                });
+        }
             </script>
         <?php }
     } ?>

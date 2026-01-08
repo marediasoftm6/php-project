@@ -1,5 +1,6 @@
-<div class="row mb-5">
-    <div class="col-12">
+<div class="row g-4">
+    <!-- Main Content Column -->
+    <div class="col-12 col-lg-8">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 style="font-weight: 800; color: var(--text);">Categories</h2>
         </div>
@@ -37,7 +38,7 @@
         }
         ?>
 
-        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        <div class="row row-cols-1 row-cols-md-2 g-4">
             <?php
             $stmt = $conn->prepare("select c.id, c.name, count(q.id) as cnt from category c left join questions q on q.category_id=c.id group by c.id, c.name order by c.name asc");
             $stmt->execute();
@@ -91,5 +92,10 @@
             }
             ?>
         </div>
+    </div>
+
+    <!-- Sidebar Column -->
+    <div class="col-12 col-lg-4">
+        <?php include('sidebar.php'); ?>
     </div>
 </div>
