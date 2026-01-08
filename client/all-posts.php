@@ -21,7 +21,7 @@ $postsRes = $stmt->get_result();
                 </div>
                 <?php if (isset($_SESSION['user']['username'])): ?>
                     <div class="text-center text-md-end">
-                        <a href="?post=true" class="btn btn-primary rounded-pill px-4 py-2 py-md-3 shadow-sm w-100 w-md-auto">
+                        <a href="create-post" class="btn btn-primary rounded-pill px-4 py-2 py-md-3 shadow-sm w-100 w-md-auto">
                             <i class="bi bi-plus-circle me-2"></i>Create New Post
                         </a>
                     </div>
@@ -53,7 +53,7 @@ $postsRes = $stmt->get_result();
                                     </div>
                                     
                                     <h4 class="card-title fw-bold mb-2">
-                                        <a href="?post-id=<?php echo $p['id']; ?>" class="text-decoration-none text-dark">
+                                        <a href="<?php echo $p['slug']; ?>" class="text-decoration-none text-dark">
                                             <?php echo htmlspecialchars($p['title']); ?>
                                         </a>
                                     </h4>
@@ -67,12 +67,12 @@ $postsRes = $stmt->get_result();
                                     </p>
 
                                     <div class="border-top pt-3 mt-3 d-flex align-items-center justify-content-between">
-                                        <div class="d-flex align-items-center">
+                                        <a href="<?php echo htmlspecialchars($p['username']); ?>" class="d-flex align-items-center text-decoration-none">
                                             <div class="avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 10px;">
                                                 <?php echo strtoupper(substr($p['username'], 0, 1)); ?>
                                             </div>
                                             <span class="small text-muted">@<?php echo htmlspecialchars($p['username']); ?></span>
-                                        </div>
+                                        </a>
                                         <span class="small text-muted"><i class="bi bi-eye me-1"></i><?php echo $p['views_count']; ?></span>
                                     </div>
                                 </div>

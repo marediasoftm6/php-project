@@ -80,7 +80,7 @@ if (isset($_POST['signup'])) {
     $checkUser->execute();
     if ($checkUser->get_result()->num_rows > 0) {
         $_SESSION['error'] = "Username is already taken";
-        header("location: /Quesiono/?signup=true");
+        header("location: /Quesiono/signup");
         exit;
     }
 
@@ -90,7 +90,7 @@ if (isset($_POST['signup'])) {
     $checkEmail->execute();
     if ($checkEmail->get_result()->num_rows > 0) {
         $_SESSION['error'] = "Email is already taken";
-        header("location: /Quesiono/?signup=true");
+        header("location: /Quesiono/signup");
         exit;
     }
 
@@ -153,7 +153,7 @@ if (isset($_POST['signup'])) {
         }
     }
     $_SESSION['error'] = "Login Failed!! Try Again";
-    header("location: /Quesiono/?login=true");
+    header("location: /Quesiono/login");
     exit;
 } else if (isset($_GET['logout'])) {
     session_unset();
@@ -163,7 +163,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $title = $_POST['title'];
@@ -189,7 +189,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $answer = $_POST['answer'];
@@ -201,7 +201,8 @@ if (isset($_POST['signup'])) {
     $query->bind_param("sii", $answer, $question_id, $user_id);
 
     if ($query->execute()) {
-        header("location: /Quesiono/?q-id=$question_id");
+        check_and_award_badges($conn, $user_id);
+        header("location: /Quesiono/$question_id");
         exit;
     } else {
         echo "Answer not added, try again!: " . $query->error;
@@ -211,7 +212,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
 
@@ -247,12 +248,13 @@ if (isset($_POST['signup'])) {
     $stmt->bind_param("iissssss", $user_id, $category_id, $title, $slug, $subtitle, $content, $links_json, $template);
 
     if ($stmt->execute()) {
+        check_and_award_badges($conn, $user_id);
         $_SESSION['notice'] = "Your rich post has been published successfully!";
         header("location: /Quesiono/");
         exit;
     } else {
         $_SESSION['error'] = "Post creation failed: " . $stmt->error;
-        header("location: /Quesiono/?post=true");
+        header("location: /Quesiono/create-post");
         exit;
     }
 } else if (isset($_GET['delete'])) {
@@ -260,7 +262,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $question_id = (int)$_GET['delete'];
@@ -290,7 +292,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $answer_id = (int)$_GET['deleteAnswer'];
@@ -306,7 +308,7 @@ if (isset($_POST['signup'])) {
             $del = $conn->prepare("DELETE FROM answers WHERE id=?");
             $del->bind_param("i", $answer_id);
             if ($del->execute()) {
-                header("location: /Quesiono/?q-id=$qid");
+                header("location: /Quesiono/$qid");
             } else {
                 echo "Deletion Failed!! Try Again";
             }
@@ -321,7 +323,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $question_id = (int)$_POST['question_id'];
@@ -338,7 +340,7 @@ if (isset($_POST['signup'])) {
             $upd = $conn->prepare("UPDATE questions SET title=?, description=? WHERE id=?");
             $upd->bind_param("ssi", $title, $description, $question_id);
             if ($upd->execute()) {
-                header("location: /Quesiono/?q-id=$question_id");
+                header("location: /Quesiono/$question_id");
             } else {
                 echo "Update failed, try again";
             }
@@ -353,7 +355,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $answer_id = (int)$_POST['answer_id'];
@@ -370,7 +372,7 @@ if (isset($_POST['signup'])) {
             $upd = $conn->prepare("UPDATE answers SET answer=? WHERE id=?");
             $upd->bind_param("si", $answer, $answer_id);
             if ($upd->execute()) {
-                header("location: /Quesiono/?q-id=$qid");
+                header("location: /Quesiono/$qid");
             } else {
                 echo "Update failed, try again";
             }
@@ -385,7 +387,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $category_id = (int)$_POST['category_id'];
@@ -393,7 +395,7 @@ if (isset($_POST['signup'])) {
     $upd = $conn->prepare("UPDATE category SET name=? WHERE id=?");
     $upd->bind_param("si", $name, $category_id);
     if ($upd->execute()) {
-        header("location: /Quesiono/?categories=true");
+        header("location: /Quesiono/categories");
     } else {
         echo "Update failed, try again";
     }
@@ -402,7 +404,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $category_id = (int)$_GET['deleteCategory'];
@@ -418,7 +420,7 @@ if (isset($_POST['signup'])) {
     $del = $conn->prepare("DELETE FROM category WHERE id=?");
     $del->bind_param("i", $category_id);
     if ($del->execute()) {
-        header("location: /Quesiono/?categories=true");
+        header("location: /Quesiono/categories");
     } else {
         echo "Deletion Failed!! Try Again";
     }
@@ -427,7 +429,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $uid = (int)$_SESSION['user']['user_id'];
@@ -441,7 +443,7 @@ if (isset($_POST['signup'])) {
     if ($upd->execute()) {
         $_SESSION['user']['username'] = $username;
         $_SESSION['user']['email'] = $email;
-        header("location: /Quesiono/?profile=true");
+        header("location: /Quesiono/" . $username);
     } else {
         echo "Profile update failed, try again";
     }
@@ -450,7 +452,7 @@ if (isset($_POST['signup'])) {
         exit("Invalid request");
     }
     if (!isset($_SESSION['user']['user_id'])) {
-        header("location: /Quesiono/?login=true");
+        header("location: /Quesiono/login");
         exit;
     }
     $uid = (int)$_SESSION['user']['user_id'];
@@ -468,7 +470,7 @@ if (isset($_POST['signup'])) {
             $upd = $conn->prepare("UPDATE users SET password=? WHERE id=?");
             $upd->bind_param("si", $storePass, $uid);
             if ($upd->execute()) {
-                header("location: /Quesiono/?settings=true");
+                header("location: /Quesiono/settings");
             } else {
                 echo "Password update failed, try again";
             }
@@ -493,8 +495,69 @@ if (isset($_POST['signup'])) {
         $upd = $conn->prepare("UPDATE email_verification_tokens SET used=1 WHERE token=?");
         $upd->bind_param("s", $token);
         $upd->execute();
-        header("location: /Quesiono/?verified=true");
+        header("location: /Quesiono/verified");
     } else {
         echo "Verification link is invalid or expired";
+    }
+}
+
+/**
+ * Checks if a user meets conditions for any badges and awards them.
+ */
+function check_and_award_badges($conn, $user_id) {
+    // 1. Rising Star: minimum 5 answers
+    $ansCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM answers WHERE user_id = ?");
+    $ansCountQuery->bind_param("i", $user_id);
+    $ansCountQuery->execute();
+    $ansCount = $ansCountQuery->get_result()->fetch_assoc()['count'];
+
+    if ($ansCount >= 5) {
+        award_badge_if_not_exists($conn, $user_id, 'Rising Star');
+    }
+
+    // 2. Quick Responder: maximum time 1 hour to answer each question out of minimum 5 questions
+    // Interpreted as: at least 5 answers where response time was <= 1 hour
+    $quickCountQuery = $conn->prepare("
+        SELECT COUNT(*) as count 
+        FROM answers a 
+        JOIN questions q ON a.question_id = q.id 
+        WHERE a.user_id = ? AND TIMESTAMPDIFF(MINUTE, q.created_at, a.created_at) <= 60
+    ");
+    $quickCountQuery->bind_param("i", $user_id);
+    $quickCountQuery->execute();
+    $quickCount = $quickCountQuery->get_result()->fetch_assoc()['count'];
+
+    if ($quickCount >= 5) {
+        award_badge_if_not_exists($conn, $user_id, 'Quick Responder');
+    }
+
+    // 3. Top Contributor: minimum 50 answers and 10 posts
+    $postCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM posts WHERE user_id = ?");
+    $postCountQuery->bind_param("i", $user_id);
+    $postCountQuery->execute();
+    $postCount = $postCountQuery->get_result()->fetch_assoc()['count'];
+
+    if ($ansCount >= 50 && $postCount >= 10) {
+        award_badge_if_not_exists($conn, $user_id, 'Top Contributor');
+    }
+}
+
+/**
+ * Helper to award a badge by name if the user doesn't already have it.
+ */
+function award_badge_if_not_exists($conn, $user_id, $badge_name) {
+    // Get badge ID
+    $badgeQuery = $conn->prepare("SELECT id FROM badges WHERE name = ?");
+    $badgeQuery->bind_param("s", $badge_name);
+    $badgeQuery->execute();
+    $badgeRes = $badgeQuery->get_result();
+    
+    if ($badgeRes->num_rows === 1) {
+        $badge_id = $badgeRes->fetch_assoc()['id'];
+        
+        // Insert into user_badges (INSERT IGNORE handles the UNIQUE constraint)
+        $awardQuery = $conn->prepare("INSERT IGNORE INTO user_badges (user_id, badge_id) VALUES (?, ?)");
+        $awardQuery->bind_param("ii", $user_id, $badge_id);
+        $awardQuery->execute();
     }
 }

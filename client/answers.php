@@ -17,12 +17,12 @@
             $initial = strtoupper(substr($username, 0, 1));
             $owner = isset($_SESSION['user']['user_id']) && ((int)$_SESSION['user']['user_id'] === (int)$row['user_id']);
             $deleteLink = "./server/requests.php?deleteAnswer=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
-            $editLink = "?q-id=$qid&edit-a=$id";
+            $editLink = "$qslug?edit-a=$id";
             ?>
             <div class="answer-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div class="user-inline">
-                        <a href="?u-id=<?php echo $ansUserId; ?>&profile=true" class="text-decoration-none d-flex align-items-center">
+                        <a href="<?php echo $username; ?>" class="text-decoration-none d-flex align-items-center">
                             <span class="user-avatar-initial"><?php echo $initial; ?></span>
                             <span class="user-name small fw-semibold" style="color: var(--text-muted);"><?php echo $username; ?></span>
                         </a>
@@ -57,7 +57,7 @@
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" name="editAnswer" class="btn btn-sm btn-primary">Save</button>
-                                <a href="?q-id=<?php echo $qid; ?>" class="btn btn-sm btn-outline-secondary">Cancel</a>
+                                <a href="<?php echo $qslug; ?>" class="btn btn-sm btn-outline-secondary">Cancel</a>
                             </div>
                         </form>
                     </div>

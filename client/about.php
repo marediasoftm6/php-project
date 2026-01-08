@@ -8,8 +8,8 @@
                 Ask meaningful questions, discover expert insights, and grow through thoughtful discussion.
             </p>
             <div class="d-flex justify-content-center gap-3 mt-4">
-                <a href="?askQuestion=true" class="btn btn-light btn-lg px-4 rounded-pill fw-bold" style="color: var(--primary);">Ask Your First Question</a>
-                <a href="?latest=true" class="btn btn-outline-light btn-lg px-4 rounded-pill fw-bold">Explore Trending Topics</a>
+                <a href="ask-question" class="btn btn-light btn-lg px-4 rounded-pill fw-bold" style="color: var(--primary);">Ask Your First Question</a>
+                <a href="latest" class="btn btn-outline-light btn-lg px-4 rounded-pill fw-bold">Explore Trending Topics</a>
             </div>
         </div>
     </section>
@@ -225,7 +225,7 @@
                         </div>
                     </div>
                 </div>
-                <a href="?signup=true" class="btn btn-primary btn-lg px-5 rounded-pill fw-bold">Become a Contributor</a>
+                <a href="signup" class="btn btn-primary btn-lg px-5 rounded-pill fw-bold">Become a Contributor</a>
             </div>
         </div>
     </section>
@@ -245,7 +245,7 @@
     <section class="final-cta py-5 rounded-4 shadow-lg text-center" style="background: var(--secondary); color: var(--white);">
         <div class="container py-3">
             <h2 class="display-5 fw-bold mb-4">Ready to explore smarter conversations?</h2>
-            <a href="?askQuestion=true" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">Ask Your First Question Today</a>
+            <a href="ask-question" class="btn btn-primary btn-lg px-5 py-3 rounded-pill fw-bold shadow-lg">Ask Your First Question Today</a>
         </div>
     </section>
 </div>

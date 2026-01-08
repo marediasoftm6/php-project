@@ -1,6 +1,6 @@
 <?php
 if (!isset($_SESSION['user']['username'])) {
-    echo "<script>window.location.href='?login=true';</script>";
+    echo "<script>window.location.href='login';</script>";
     exit();
 }
 ?>
@@ -114,7 +114,7 @@ if (!isset($_SESSION['user']['username'])) {
 
         <!-- Preview Column -->
         <div class="col-lg-6">
-            <div class="card border-0 shadow-sm rounded-4 p-0 overflow-hidden h-100 sticky-lg-top" style="top: 20px; max-height: calc(100vh - 40px);">
+            <div class="card border-0 shadow-sm rounded-4 p-0 overflow-hidden h-100">
                 <div class="bg-dark py-2 px-3 d-flex align-items-center justify-content-between">
                     <span class="text-white small fw-bold"><i class="bi bi-eye me-2"></i>Live Preview</span>
                     <div class="d-flex gap-1">

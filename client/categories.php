@@ -29,7 +29,7 @@
                         </div>
                         <div class="d-flex gap-2">
                             <button type="submit" name="editCategory" class="btn btn-primary">Save Changes</button>
-                            <a href="?categories=true" class="btn btn-outline-secondary">Cancel</a>
+                            <a href="categories" class="btn btn-outline-secondary">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -40,23 +40,24 @@
 
         <div class="row row-cols-1 row-cols-md-2 g-4">
             <?php
-            $stmt = $conn->prepare("select c.id, c.name, count(q.id) as cnt from category c left join questions q on q.category_id=c.id group by c.id, c.name order by c.name asc");
+            $stmt = $conn->prepare("select c.id, c.name, c.slug, count(q.id) as cnt from category c left join questions q on q.category_id=c.id group by c.id, c.name, c.slug order by c.name asc");
             $stmt->execute();
             $result = $stmt->get_result();
             
             foreach ($result as $row) {
                 $name = htmlspecialchars(ucfirst($row["name"]), ENT_QUOTES, 'UTF-8');
                 $id = (int)$row["id"];
+                $slug = $row["slug"];
                 $cnt = (int)$row["cnt"];
                 $deleteLink = "./server/requests.php?deleteCategory=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
-                $editLink = "?categories=true&edit-c=$id";
+                $editLink = "categories?edit-c=$id";
                 ?>
                 <div class="col">
                     <div class="profile-sidebar-card h-100 d-flex flex-column justify-content-between p-4">
                         <div>
                             <div class="d-flex justify-content-between align-items-start mb-3">
                                 <h4 class="mb-0">
-                                    <a href="?c-id=<?php echo $id; ?>" class="text-decoration-none" style="color: var(--text); font-weight: 700;">
+                                    <a href="<?php echo $slug; ?>" class="text-decoration-none" style="color: var(--text); font-weight: 700;">
                                         <?php echo $name; ?>
                                     </a>
                                 </h4>
@@ -73,7 +74,7 @@
                                                 <i class="bi bi-trash me-2"></i>Delete
                                             </a></li>
                                         <?php } else { ?>
-                                            <li><a class="dropdown-item py-2" href="?login=true">
+                                            <li><a class="dropdown-item py-2" href="login">
                                                 <i class="bi bi-box-arrow-in-right me-2"></i>Login to Edit
                                             </a></li>
                                         <?php } ?>
@@ -84,7 +85,7 @@
                         </div>
                         <div class="mt-auto d-flex align-items-center justify-content-between">
                             <span class="badge-category"><?php echo $cnt; ?> Questions</span>
-                            <a href="?c-id=<?php echo $id; ?>" class="btn btn-sm btn-outline-primary py-1 px-3">Explore</a>
+                            <a href="<?php echo $slug; ?>" class="btn btn-sm btn-outline-primary py-1 px-3">Explore</a>
                         </div>
                     </div>
                 </div>

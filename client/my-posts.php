@@ -29,7 +29,7 @@ $postsRes = $stmt->get_result();
                     <p class="text-muted mb-0">Manage and view all the rich content you've published.</p>
                 </div>
                 <div class="text-center text-md-end">
-                    <a href="?post=true" class="btn btn-primary rounded-pill px-4 py-2 py-md-3 shadow-sm w-100 w-md-auto">
+                    <a href="create-post" class="btn btn-primary rounded-pill px-4 py-2 py-md-3 shadow-sm w-100 w-md-auto">
                         <i class="bi bi-plus-circle me-2"></i>Create New Post
                     </a>
                 </div>
@@ -41,7 +41,7 @@ $postsRes = $stmt->get_result();
                         <i class="bi bi-journal-plus display-1 text-muted opacity-25"></i>
                         <h3 class="mt-3 text-muted">You haven't posted anything yet</h3>
                         <p>Start sharing your knowledge by creating your first post.</p>
-                        <a href="?post=true" class="btn btn-primary mt-3">Create First Post</a>
+                        <a href="create-post" class="btn btn-primary mt-3">Create First Post</a>
                     </div>
                 <?php else: ?>
                     <?php while ($p = $postsRes->fetch_assoc()): 
@@ -61,7 +61,7 @@ $postsRes = $stmt->get_result();
                                     </div>
                                     
                                     <h4 class="card-title fw-bold mb-2">
-                                        <a href="?post-id=<?php echo $p['id']; ?>" class="text-decoration-none text-dark">
+                                        <a href="<?php echo $p['slug']; ?>" class="text-decoration-none text-dark">
                                             <?php echo htmlspecialchars($p['title']); ?>
                                         </a>
                                     </h4>
@@ -80,7 +80,7 @@ $postsRes = $stmt->get_result();
                                         </div>
                                         <div class="d-flex align-items-center gap-3">
                                             <span class="small text-muted"><i class="bi bi-eye me-1"></i><?php echo $p['views_count']; ?></span>
-                                            <a href="?post-id=<?php echo $p['id']; ?>" class="btn btn-sm btn-outline-primary rounded-pill">View</a>
+                                            <a href="<?php echo $p['slug']; ?>" class="btn btn-sm btn-outline-primary rounded-pill">View</a>
                                         </div>
                                     </div>
                                 </div>

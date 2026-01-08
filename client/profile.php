@@ -17,7 +17,7 @@
     }
 
     if ($uid === 0) {
-        echo "<div class='profile-card-modern text-center'><p>Please <a href='?login=true'>login</a> to view your profile.</p></div>";
+        echo "<div class='profile-card-modern text-center'><p>Please <a href='login'>login</a> to view your profile.</p></div>";
     } else {
         $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at FROM users WHERE id=? LIMIT 1");
         $stmt->bind_param("i", $uid);
@@ -80,7 +80,7 @@
                                 <div class="profile-name-row">
                                     <h2><?php echo $displayUsername; ?></h2>
                                     <?php if ($isOwnProfile): ?>
-                                        <a href="?profile_edit=true" class="action-btn-modern">
+                                        <a href="profile-edit" class="action-btn-modern">
                                             <i class="bi bi-pencil"></i> Edit Profile
                                         </a>
                                     <?php else: ?>
@@ -134,7 +134,7 @@
                         <div id="answers-tab" class="tab-content">
                             <h5 class="mb-4">Recent Answers</h5>
                             <?php
-                            $ansStmt = $conn->prepare("SELECT a.*, q.title as q_title FROM answers a JOIN questions q ON q.id = a.question_id WHERE a.user_id = ? ORDER BY a.id DESC");
+                            $ansStmt = $conn->prepare("SELECT a.*, q.title as q_title, q.slug as q_slug FROM answers a JOIN questions q ON q.id = a.question_id WHERE a.user_id = ? ORDER BY a.id DESC");
                             $ansStmt->bind_param("i", $uid);
                             $ansStmt->execute();
                             $ansRes = $ansStmt->get_result();
@@ -144,7 +144,7 @@
                                 foreach ($ansRes as $ans) {
                                     ?>
                                     <div class="answer-card mb-3">
-                                        <h6 class="mb-2"><a href="?q-id=<?php echo $ans['question_id']; ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($ans['q_title']); ?></a></h6>
+                                        <h6 class="mb-2"><a href="<?php echo htmlspecialchars($ans['q_slug']); ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($ans['q_title']); ?></a></h6>
                                         <p class="small mb-0 text-muted"><?php echo htmlspecialchars(substr($ans['answer'], 0, 150)) . (strlen($ans['answer']) > 150 ? '...' : ''); ?></p>
                                     </div>
                                     <?php
@@ -166,7 +166,7 @@
                                 foreach ($qRes as $q) {
                                     ?>
                                     <div class="question-list mb-3">
-                                        <h6 class="mb-2"><a href="?q-id=<?php echo $q['id']; ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($q['title']); ?></a></h6>
+                                        <h6 class="mb-2"><a href="<?php echo htmlspecialchars($q['slug']); ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($q['title']); ?></a></h6>
                                         <span class="badge-category"><?php echo $q['acnt']; ?> Answers</span>
                                     </div>
                                     <?php
@@ -195,7 +195,7 @@
                                         <div class="d-flex align-items-center mb-2">
                                             <i class="bi <?php echo $templateIcon; ?> text-primary me-2"></i>
                                             <h6 class="mb-0">
-                                                <a href="?post-id=<?php echo $p['id']; ?>" class="text-decoration-none text-primary">
+                                                <a href="<?php echo htmlspecialchars($p['slug']); ?>" class="text-decoration-none text-primary">
                                                     <?php echo htmlspecialchars($p['title']); ?>
                                                 </a>
                                             </h6>
@@ -219,15 +219,13 @@
                 <div class="mt-4 col-12 col-lg-4">
                     <div class="profile-sidebar-card">
                         <h5 class="sidebar-title">Community Activity</h5>
-                        <?php if ($acnt >= 5): ?>
-                        <div class="sidebar-item">
-                            <i class="bi bi-award text-warning"></i>
-                            <span>Top Contributor</span>
-                        </div>
-                        <?php endif; ?>
                         <div class="sidebar-item">
                             <i class="bi bi-chat-heart text-danger"></i>
                             <span><?php echo $acnt; ?> Helpful Answers</span>
+                        </div>
+                        <div class="sidebar-item">
+                            <i class="bi bi-pencil-square text-success"></i>
+                            <span><?php echo $pcnt; ?> Published Posts</span>
                         </div>
                         <div class="sidebar-item">
                             <i class="bi bi-people text-info"></i>
@@ -238,8 +236,30 @@
                     <div class="profile-sidebar-card">
                         <h5 class="sidebar-title">Badges</h5>
                         <div class="d-flex flex-wrap gap-2">
-                            <span class="badge bg-light text-dark border p-2"><i class="bi bi-lightning-fill text-warning"></i> Quick Responder</span>
-                            <span class="badge bg-light text-dark border p-2"><i class="bi bi-check-circle-fill text-success"></i> Problem Solver</span>
+                            <?php
+                            $badgeStmt = $conn->prepare("
+                                SELECT b.name, b.icon, b.description 
+                                FROM user_badges ub 
+                                JOIN badges b ON ub.badge_id = b.id 
+                                WHERE ub.user_id = ?
+                            ");
+                            $badgeStmt->bind_param("i", $uid);
+                            $badgeStmt->execute();
+                            $badgeRes = $badgeStmt->get_result();
+
+                            if ($badgeRes->num_rows === 0) {
+                                echo "<span class='text-muted small'>No badges earned yet.</span>";
+                            } else {
+                                while ($badge = $badgeRes->fetch_assoc()) {
+                                    ?>
+                                    <span class="badge bg-light text-dark border p-2" title="<?php echo htmlspecialchars($badge['description']); ?>">
+                                        <i class="bi <?php echo htmlspecialchars($badge['icon']); ?> text-primary"></i> 
+                                        <?php echo htmlspecialchars($badge['name']); ?>
+                                    </span>
+                                    <?php
+                                }
+                            }
+                            ?>
                         </div>
                     </div>
                 </div>
@@ -285,7 +305,7 @@
                             countSpan.innerText = parseInt(countSpan.innerText) - 1;
                         }
                     } else if (data.error === 'not_logged_in') {
-                        window.location.href = '?login=true';
+                        window.location.href = 'login';
                     }
                 })
                 .catch(err => {

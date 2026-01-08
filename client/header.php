@@ -20,14 +20,14 @@ include_once(__DIR__ . "/../common/db.php");
         $is_home = !isset($_GET['about']) && !isset($_GET['askQuestion']) && !isset($_GET['categories']) && !isset($_GET['latest']) && !isset($_GET['profile']) && !isset($_GET['u-id']) && !isset($_GET['q-id']);
         ?>
         <li class="nav-item">
-          <a class="nav-link <?php echo isset($_GET['categories']) ? 'active' : ''; ?>" href="?categories=true">Categories</a>
+          <a class="nav-link <?php echo isset($_GET['categories']) ? 'active' : ''; ?>" href="categories">Categories</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link <?php echo isset($_GET['latest']) ? 'active' : ''; ?>" href="?latest=true">Latest</a>
+          <a class="nav-link <?php echo isset($_GET['latest']) ? 'active' : ''; ?>" href="latest">Latest</a>
         </li>
         <?php if (isset($_SESSION['user']['username'])) { ?>
           <li class="nav-item">
-            <a class="nav-link <?php echo isset($_GET['askQuestion']) ? 'active' : ''; ?>" href="?askQuestion=true">Ask Question</a>
+            <a class="nav-link <?php echo isset($_GET['askQuestion']) ? 'active' : ''; ?>" href="ask-question">Ask Question</a>
           </li>
         <?php } ?>
         <li class="nav-item dropdown explore-dropdown">
@@ -35,12 +35,12 @@ include_once(__DIR__ . "/../common/db.php");
             Explore
           </a>
           <ul class="dropdown-menu shadow-lg border-0 mt-2">
-            <li><a class="dropdown-item py-2 <?php echo isset($_GET['about']) ? 'active' : ''; ?>" href="?about=true">
-              <i class="bi bi-info-circle me-2"></i>About
+            <li><a class="dropdown-item py-2 <?php echo isset($_GET['about']) ? 'active' : ''; ?>" href="about">
+              About
             </a></li>
             <?php if (isset($_SESSION['user']['username'])) { ?>
-              <li><a class="dropdown-item py-2 <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="?u-id=<?php echo $_SESSION['user']['user_id'] ?>">
-                <i class="bi bi-chat-dots me-2"></i>My Q&A
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="<?php echo $_SESSION['user']['username'] ?>">
+                My Q&A
               </a></li>
             <?php } ?>
           </ul>
@@ -52,16 +52,16 @@ include_once(__DIR__ . "/../common/db.php");
           </a>
           <ul class="dropdown-menu shadow-lg border-0 mt-2">
             <?php if (isset($_SESSION['user']['username'])) { ?>
-              <li><a class="dropdown-item py-2 <?php echo isset($_GET['post']) ? 'active' : ''; ?>" href="?post=true">
-                <i class="bi bi-plus-circle me-2"></i>Add Post
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['post']) ? 'active' : ''; ?>" href="create-post">
+                Add Post
               </a></li>
             <?php } ?>
-            <li><a class="dropdown-item py-2 <?php echo isset($_GET['all-posts']) ? 'active' : ''; ?>" href="?all-posts=true">
-              <i class="bi bi-grid-3x3-gap me-2"></i>All Posts
+            <li><a class="dropdown-item py-2 <?php echo isset($_GET['all-posts']) ? 'active' : ''; ?>" href="posts">
+              All Posts
             </a></li>
             <?php if (isset($_SESSION['user']['username'])) { ?>
-              <li><a class="dropdown-item py-2 <?php echo isset($_GET['my-posts']) ? 'active' : ''; ?>" href="?my-posts=true">
-                <i class="bi bi-person-badge me-2"></i>My Posts
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['my-posts']) ? 'active' : ''; ?>" href="my-posts">
+                My Posts
               </a></li>
             <?php } ?>
           </ul>
@@ -134,11 +134,6 @@ include_once(__DIR__ . "/../common/db.php");
                   <?php endwhile;
                 endif; ?>
               </div>
-              <?php if ($notifs->num_rows > 0): ?>
-                <li class="text-center border-top">
-                  <a href="?notifications=true" class="dropdown-item py-2 small fw-semibold text-primary">View all notifications</a>
-                </li>
-              <?php endif; ?>
             </ul>
           </div>
         <?php endif; ?>
@@ -155,19 +150,19 @@ include_once(__DIR__ . "/../common/db.php");
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
             <?php if (isset($_SESSION['user']['username'])) { ?>
-              <li><a class="dropdown-item py-2" href="?profile=true">
-                <i class="bi bi-person me-2"></i>Profile
+              <li><a class="dropdown-item py-2" href="<?php echo $_SESSION['user']['username'] ?>">
+                Profile
               </a></li>
-              <li><a class="dropdown-item py-2" href="?profile_edit=true">
-                <i class="bi bi-pencil me-2"></i>Edit Profile
+              <li><a class="dropdown-item py-2" href="profile-edit">
+                Edit Profile
               </a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item py-2 text-danger" href="./server/requests.php?logout=true">
-                <i class="bi bi-box-arrow-right me-2"></i>Logout
+                Logout
               </a></li>
             <?php } else { ?>
-              <li><a class="dropdown-item py-2" href="?login=true">Login</a></li>
-              <li><a class="dropdown-item py-2" href="?signup=true">Signup</a></li>
+              <li><a class="dropdown-item py-2" href="login">Login</a></li>
+              <li><a class="dropdown-item py-2" href="signup">Signup</a></li>
             <?php } ?>
           </ul>
         </div>

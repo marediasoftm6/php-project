@@ -20,7 +20,7 @@
             <div class="question-detail-card">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div class="user-inline">
-                        <a href="?u-id=<?php echo $row['user_id']; ?>&profile=true" class="text-decoration-none d-flex align-items-center">
+                        <a href="<?php echo $username; ?>" class="text-decoration-none d-flex align-items-center">
                             <span class="user-avatar-initial" style="width: 40px; height: 40px; font-size: 1rem;"><?php echo $initial; ?></span>
                             <div>
                                 <span class="user-name d-block fw-bold" style="color: var(--text);"><?php echo $username; ?></span>
@@ -29,12 +29,12 @@
                         </a>
                     </div>
                     <?php 
-                    $catQuery = $conn->prepare("SELECT name FROM category WHERE id = ?");
+                    $catQuery = $conn->prepare("SELECT name, slug FROM category WHERE id = ?");
                     $catQuery->bind_param("i", $cid);
                     $catQuery->execute();
                     $catResult = $catQuery->get_result()->fetch_assoc();
                     if ($catResult) {
-                        echo '<span class="badge-category">' . htmlspecialchars($catResult['name']) . '</span>';
+                        echo '<a href="' . $catResult['slug'] . '" class="text-decoration-none"><span class="badge-category">' . htmlspecialchars($catResult['name']) . '</span></a>';
                     }
                     ?>
                 </div>
@@ -45,7 +45,7 @@
 
                 <?php if ($owner && !isset($_GET['edit-q'])) { ?>
                     <div class="mt-4 pt-3 border-top d-flex gap-2">
-                        <a href="?q-id=<?php echo $qid; ?>&edit-q=true" class="btn btn-sm btn-outline-primary px-3">
+                        <a href="<?php echo $row['slug']; ?>?edit-q=true" class="btn btn-sm btn-outline-primary px-3">
                             <i class="bi bi-pencil me-1"></i> Edit
                         </a>
                         <a href="./server/requests.php?deleteQuestion=<?php echo $qid; ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" 
@@ -72,7 +72,7 @@
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" name="editQuestion" class="btn btn-primary">Save Changes</button>
-                                <a href="?q-id=<?php echo $qid; ?>" class="btn btn-outline-secondary">Cancel</a>
+                                <a href="<?php echo $row['slug']; ?>" class="btn btn-outline-secondary">Cancel</a>
                             </div>
                         </form>
                     </div>
@@ -81,7 +81,10 @@
 
             <div class="answers-section mt-5">
                 <h3 class="mb-4" style="font-weight: 700;">Answers</h3>
-                <?php include("./client/answers.php"); ?>
+                <?php 
+                $qslug = $row['slug'];
+                include("./client/answers.php"); 
+                ?>
             </div>
 
             <?php if (isset($_SESSION['user']['username'])) { ?>
@@ -99,7 +102,7 @@
             <?php } else { ?>
                 <div class="profile-card-modern text-center mt-4">
                     <p class="mb-3">Please login to answer this question.</p>
-                    <a href="?login=true" class="btn btn-primary">Login Now</a>
+                    <a href="login" class="btn btn-primary">Login Now</a>
                 </div>
             <?php } ?>
 

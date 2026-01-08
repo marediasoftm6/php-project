@@ -6,7 +6,7 @@
     <?php
     include("./common/db.php");
     if (!isset($_SESSION['user']['user_id'])) {
-        echo "<div class='text-center p-4'><p>Please <a href='?login=true'>login</a> to edit your profile.</p></div>";
+        echo "<div class='text-center p-4'><p>Please <a href='login'>login</a> to edit your profile.</p></div>";
     } else {
         $uid = (int)$_SESSION['user']['user_id'];
         
@@ -57,7 +57,7 @@
 
             <div class="d-grid gap-2 mt-4">
                 <button type="submit" name="editProfile" class="btn btn-primary btn-lg">Save Changes</button>
-                <a href="?profile=true" class="btn btn-outline-secondary">Cancel</a>
+                <a href="<?php echo htmlspecialchars($row['username'], ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-secondary">Cancel</a>
             </div>
         </form>
     <?php } ?>
