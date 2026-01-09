@@ -1,6 +1,7 @@
 <div class="container mt-15 profile-container">
     <?php
     include("./common/db.php");
+    include("./common/badge_helper.php");
     $isOwnProfile = true;
     $uid = 0;
 
@@ -19,6 +20,9 @@
     if ($uid === 0) {
         echo "<div class='profile-card-modern text-center'><p>Please <a href='login'>login</a> to view your profile.</p></div>";
     } else {
+        // Check and award badges on view
+        check_and_award_badges($conn, $uid);
+        
         $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at FROM users WHERE id=? LIMIT 1");
         $stmt->bind_param("i", $uid);
         $stmt->execute();
