@@ -25,11 +25,13 @@ include_once(__DIR__ . "/../common/db.php");
         <li class="nav-item">
           <a class="nav-link <?php echo isset($_GET['latest']) ? 'active' : ''; ?>" href="latest">Latest</a>
         </li>
-        <?php if (isset($_SESSION['user']['username'])) { ?>
-          <li class="nav-item">
+        <li class="nav-item">
+          <?php if (isset($_SESSION['user']['username'])) { ?>
             <a class="nav-link <?php echo isset($_GET['askQuestion']) ? 'active' : ''; ?>" href="ask-question">Ask Question</a>
-          </li>
-        <?php } ?>
+          <?php } else { ?>
+            <a class="nav-link" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal">Ask Question</a>
+          <?php } ?>
+        </li>
         <li class="nav-item dropdown explore-dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Explore
@@ -38,8 +40,15 @@ include_once(__DIR__ . "/../common/db.php");
             <li><a class="dropdown-item py-2 <?php echo isset($_GET['about']) ? 'active' : ''; ?>" href="about">
               About
             </a></li>
+            <li><a class="dropdown-item py-2 <?php echo isset($_GET['privacy']) ? 'active' : ''; ?>" href="privacy">
+              Privacy Policy
+            </a></li>
             <?php if (isset($_SESSION['user']['username'])) { ?>
-              <li><a class="dropdown-item py-2 <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="<?php echo $_SESSION['user']['username'] ?>">
+              <li><a class="dropdown-item py-2 <?php echo isset($_GET['u-id']) && $_GET['u-id'] == $_SESSION['user']['user_id'] ? 'active' : ''; ?>" href="<?php echo urlencode($_SESSION['user']['username']) ?>">
+                My Q&A
+              </a></li>
+            <?php } else { ?>
+              <li><a class="dropdown-item py-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal">
                 My Q&A
               </a></li>
             <?php } ?>
@@ -55,6 +64,10 @@ include_once(__DIR__ . "/../common/db.php");
               <li><a class="dropdown-item py-2 <?php echo isset($_GET['post']) ? 'active' : ''; ?>" href="create-post">
                 Add Post
               </a></li>
+            <?php } else { ?>
+              <li><a class="dropdown-item py-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal">
+                Add Post
+              </a></li>
             <?php } ?>
             <li><a class="dropdown-item py-2 <?php echo isset($_GET['all-posts']) ? 'active' : ''; ?>" href="posts">
               All Posts
@@ -63,15 +76,19 @@ include_once(__DIR__ . "/../common/db.php");
               <li><a class="dropdown-item py-2 <?php echo isset($_GET['my-posts']) ? 'active' : ''; ?>" href="my-posts">
                 My Posts
               </a></li>
+            <?php } else { ?>
+              <li><a class="dropdown-item py-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal">
+                My Posts
+              </a></li>
             <?php } ?>
           </ul>
         </li>
       </ul>
       <div class="d-flex align-items-center gap-3">
-        <form class="search-wrap" action="" role="search">
+        <form class="search-wrap" action="./" role="search">
           <span class="search-icon" aria-hidden="true">
           </span>
-          <input class="form-control search-input" name="search" type="search" placeholder="Search questions..."/>
+          <input class="form-control search-input" name="search" type="search" placeholder="Search questions..." value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>"/>
         </form>
 
         <?php if (isset($_SESSION['user']['username'])): 
@@ -146,10 +163,10 @@ include_once(__DIR__ . "/../common/db.php");
                 <path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
               </svg>
             </div>
-            <span class="d-none d-sm-inline"><?php echo isset($_SESSION['user']['username']) ? htmlspecialchars($_SESSION['user']['username']) : 'Account'; ?></span>
+            <span class="d-none d-sm-inline"><?php echo (isset($_SESSION['user']['username']) && is_verified_user($conn)) ? htmlspecialchars($_SESSION['user']['username']) : 'Account'; ?></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
-            <?php if (isset($_SESSION['user']['username'])) { ?>
+            <?php if (isset($_SESSION['user']['username']) && is_verified_user($conn)) { ?>
               <li><a class="dropdown-item py-2" href="<?php echo $_SESSION['user']['username'] ?>">
                 Profile
               </a></li>
@@ -163,6 +180,10 @@ include_once(__DIR__ . "/../common/db.php");
             <?php } else { ?>
               <li><a class="dropdown-item py-2" href="login">Login</a></li>
               <li><a class="dropdown-item py-2" href="signup">Signup</a></li>
+              <?php if (isset($_SESSION['temp_verify_user'])): ?>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item py-2 text-danger" href="./server/requests.php?logout=true">Cancel Verification</a></li>
+              <?php endif; ?>
             <?php } ?>
           </ul>
         </div>
@@ -170,3 +191,60 @@ include_once(__DIR__ . "/../common/db.php");
     </div>
   </div>
 </nav>
+
+<!-- Login Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg" style="border-radius: 1.5rem; overflow: hidden;">
+      <div class="modal-header border-0 pb-0 pe-4 pt-4">
+        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-4 p-md-5 pt-0">
+        <div class="text-center mb-4">
+          <img src="./public/transparent-logo.png" alt="Quesiono Logo" class="websiteLogo mb-3" style="max-height: 40px;">
+          <h2 class="fw-bold text-dark">Welcome Back!</h2>
+          <p class="text-muted">Login to access all features</p>
+        </div>
+
+        <form method="post" action="./server/requests.php">
+          <div class="form-group mb-4">
+            <label class="form-label fw-semibold small text-uppercase" for="modalEmail">Email Address</label>
+            <input type="email" name="email" class="form-control form-control-lg bg-light border-0 shadow-none" id="modalEmail" placeholder="name@example.com" required style="font-size: 0.95rem; border-radius: 0.8rem;">
+          </div>
+
+          <div class="form-group mb-4">
+            <label class="form-label fw-semibold small text-uppercase" for="modalPassword">Password</label>
+            <div class="input-group">
+              <input type="password" name="password" class="form-control form-control-lg bg-light border-0 shadow-none border-end-0" id="modalPassword" placeholder="Enter your password" required style="font-size: 0.95rem; border-radius: 0.8rem 0 0 0.8rem;">
+              <span class="input-group-text bg-light border-0 cursor-pointer text-muted" onclick="toggleModalPassword('modalPassword', this)" style="border-radius: 0 0.8rem 0.8rem 0;">
+                <i class="bi bi-eye"></i>
+              </span>
+            </div>
+          </div>
+
+          <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
+          
+          <button type="submit" name="login" class="btn btn-primary btn-lg w-100 mb-4 shadow-sm" style="border-radius: 0.8rem; font-weight: 600;">Login</button>
+          
+          <div class="text-center">
+            <p class="small text-muted mb-0">Don't have an account? <a href="signup" class="text-primary fw-bold text-decoration-none">Sign Up</a></p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleModalPassword(inputId, iconElement) {
+    const input = document.getElementById(inputId);
+    const icon = iconElement.querySelector('i');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+}
+</script>

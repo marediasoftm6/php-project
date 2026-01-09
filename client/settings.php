@@ -5,8 +5,8 @@
             <?php
             include("./common/db.php");
             if (!isset($_SESSION['user']['user_id'])) {
-                echo "<div class='question-list'><p>Please <a href='login'>login</a> to access settings.</p></div>";
-            } else {
+                 echo "<div class='question-list'><p>Please <a href='javascript:void(0)' data-bs-toggle='modal' data-bs-target='#loginModal'>login</a> to access settings.</p></div>";
+              } else {
                 ?>
                 <form class="question-list profile-card" method="post" action="./server/requests.php">
                     <h4>Change Password</h4>

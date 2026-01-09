@@ -49,7 +49,7 @@ $formattedContent = nl2br($post['content']);
                                 <p class="preview-subtitle lead"><?php echo htmlspecialchars($post['subtitle']); ?></p>
                             <?php endif; ?>
                             <div class="d-flex align-items-center mt-4 text-muted small">
-                                <a href="<?php echo htmlspecialchars($post['username']); ?>" class="text-decoration-none d-flex align-items-center text-muted">
+                                <a href="<?php echo urlencode($post['username']); ?>" class="text-decoration-none d-flex align-items-center text-muted">
                                     <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                         <?php echo strtoupper(substr($post['username'], 0, 1)); ?>
                                     </div>

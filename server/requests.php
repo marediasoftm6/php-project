@@ -60,6 +60,23 @@ if (isset($_GET['markRead'])) {
     exit;
 }
 
+/**
+ * Checks if the current user is verified.
+ */
+function is_verified($conn) {
+    if (!isset($_SESSION['user']['user_id'])) return false;
+    $uid = (int)$_SESSION['user']['user_id'];
+    $stmt = $conn->prepare("SELECT verified FROM users WHERE id=? LIMIT 1");
+    $stmt->bind_param("i", $uid);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows === 1) {
+        $row = $res->fetch_assoc();
+        return (bool)$row['verified'];
+    }
+    return false;
+}
+
 if (isset($_POST['signup'])) {
     if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
         exit("Invalid request");
@@ -98,34 +115,112 @@ if (isset($_POST['signup'])) {
     $stmt = $conn->prepare("INSERT INTO `users` (`username`, `email`, `gender`, `password`) VALUES (?, ?, ?, ?)");
     $stmt->bind_param("ssss", $username, $email, $gender, $storePass);
     if ($stmt->execute()) {
-        $_SESSION["user"] = ["username" => $username, "email" => $email, "user_id" => $stmt->insert_id];
+        $uid = (int)$stmt->insert_id;
+        // Do NOT set $_SESSION["user"] here anymore.
+        // The user must verify first, then log in manually.
+        
         // Email verification token setup
         $ddl = "CREATE TABLE IF NOT EXISTS email_verification_tokens (
             id INT AUTO_INCREMENT PRIMARY KEY,
             user_id INT NOT NULL,
             token CHAR(64) NOT NULL,
+            code CHAR(6) NOT NULL,
             expires_at DATETIME NOT NULL,
             used TINYINT(1) NOT NULL DEFAULT 0,
             created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
             INDEX idx_token (token),
+            INDEX idx_code (code),
             INDEX idx_user_expires (user_id, expires_at)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
         $conn->query($ddl);
+
+        // Check if code column exists (migration for existing table)
+        $res = $conn->query("SHOW COLUMNS FROM email_verification_tokens LIKE 'code'");
+        if ($res->num_rows === 0) {
+            $conn->query("ALTER TABLE email_verification_tokens ADD COLUMN code CHAR(6) NOT NULL AFTER token");
+        }
+
         $token = generate_token(64);
+        $code = sprintf("%06d", mt_rand(1, 999999));
         $expires = date('Y-m-d H:i:s', time() + 60 * 60); // 1 hour
-        $ins = $conn->prepare("INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");
-        $uid = (int)$stmt->insert_id;
-        $ins->bind_param("iss", $uid, $token, $expires);
+        $ins = $conn->prepare("INSERT INTO email_verification_tokens (user_id, token, code, expires_at) VALUES (?, ?, ?, ?)");
+        $ins->bind_param("isss", $uid, $token, $code, $expires);
         $ins->execute();
+
         $verifyLink = base_url() . "/server/requests.php?verifyEmail=" . urlencode($token);
         $subject = "Verify your email for Quesiono";
-        $body = "<p>Hello " . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ",</p>
-                 <p>Please verify your email address by clicking the link below:</p>
-                 <p><a href=\"" . $verifyLink . "\">Verify Email</a></p>
-                 <p>This link will expire in 1 hour.</p>";
+        $body = "
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset='UTF-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>Verify your email</title>
+        </head>
+        <body style='margin: 0; padding: 0; background-color: #f4f7f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'>
+            <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: #f4f7f9; padding: 40px 0;'>
+                <tr>
+                    <td align='center'>
+                        <table border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                            <!-- Header -->
+                            <tr>
+                                <td align='center' style='padding: 40px 40px 20px 40px;'>
+                                    <h1 style='margin: 0; color: #0d6efd; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;'>Quesiono</h1>
+                                </td>
+                            </tr>
+                            
+                            <!-- Hero Section -->
+                            <tr>
+                                <td style='padding: 0 40px 20px 40px; text-align: center;'>
+                                    <h2 style='margin: 0; color: #1a1a1a; font-size: 24px; font-weight: 700; line-height: 1.3;'>Welcome to our community!</h2>
+                                    <p style='margin: 12px 0 0 0; color: #666666; font-size: 16px; line-height: 1.5;'>Hi " . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ", we're excited to have you on board. Please verify your email to get started.</p>
+                                </td>
+                            </tr>
+
+                            <!-- Main Button -->
+                            <tr>
+                                <td align='center' style='padding: 20px 40px;'>
+                                    <a href=\"" . $verifyLink . "\" style='display: inline-block; background-color: #0d6efd; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; transition: background-color 0.2s;'>Verify Email Address</a>
+                                </td>
+                            </tr>
+
+                            <!-- Divider -->
+                            <tr>
+                                <td style='padding: 20px 40px;'>
+                                    <div style='height: 1px; background-color: #eeeeee; width: 100%;'></div>
+                                </td>
+                            </tr>
+
+                            <!-- Alternate Code -->
+                            <tr>
+                                <td align='center' style='padding: 10px 40px 40px 40px;'>
+                                    <p style='margin: 0 0 16px 0; color: #666666; font-size: 14px;'>Or enter this code on the verification page:</p>
+                                    <div style='background-color: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 12px; padding: 20px; display: inline-block;'>
+                                        <span style='font-family: \"Courier New\", Courier, monospace; font-size: 36px; font-weight: 800; color: #333333; letter-spacing: 8px;'>" . $code . "</span>
+                                    </div>
+                                    <p style='margin: 20px 0 0 0; color: #999999; font-size: 12px;'>This link and code will expire in 1 hour.</p>
+                                </td>
+                            </tr>
+
+                            <!-- Footer -->
+                            <tr>
+                                <td style='padding: 30px 40px; background-color: #fafafa; text-align: center;'>
+                                    <p style='margin: 0; color: #999999; font-size: 12px; line-height: 1.5;'>
+                                        &copy; " . date('Y') . " Quesiono. All rights reserved.<br>
+                                        If you didn't create an account, you can safely ignore this email.
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+        </body>
+        </html>";
+        
         $sent = send_email($email, $subject, $body);
-        $_SESSION['notice'] = $sent ? "Verification email sent." : "Could not send verification email. Use link: " . $verifyLink;
-        header("location: /Quesiono/");
+        $_SESSION['notice'] = $sent ? "Verification email sent. Please check your inbox." : "Verification email failed to send. Your confirmation code is: <strong>" . $code . "</strong>";
+        header("location: /Quesiono/verify-code");
     } else {
         echo "Registration Failed!! Try Again";
     }
@@ -139,7 +234,7 @@ if (isset($_POST['signup'])) {
     }
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email=? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, username, password, verified FROM users WHERE email=? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -147,6 +242,13 @@ if (isset($_POST['signup'])) {
         $row = $res->fetch_assoc();
         $valid = password_verify($password, $row['password']) || ($password === $row['password']);
         if ($valid) {
+            if (!(int)$row['verified']) {
+                // For unverified users, we only store minimal info for verification page
+                $_SESSION["temp_verify_user"] = ["email" => $email, "user_id" => $row['id']];
+                $_SESSION['notice'] = "Please verify your email to continue.";
+                header("location: /Quesiono/verify-code");
+                exit;
+            }
             $_SESSION["user"] = ["username" => $row['username'], "email" => $email, "user_id" => $row['id']];
             header("location: /Quesiono/");
             exit;
@@ -164,6 +266,11 @@ if (isset($_POST['signup'])) {
     }
     if (!isset($_SESSION['user']['user_id'])) {
         header("location: /Quesiono/login");
+        exit;
+    }
+    if (!is_verified($conn)) {
+        $_SESSION['error'] = "Please verify your email to ask questions.";
+        header("location: /Quesiono/verify-code");
         exit;
     }
     $title = $_POST['title'];
@@ -192,6 +299,11 @@ if (isset($_POST['signup'])) {
         header("location: /Quesiono/login");
         exit;
     }
+    if (!is_verified($conn)) {
+        $_SESSION['error'] = "Please verify your email to post answers.";
+        header("location: /Quesiono/verify-code");
+        exit;
+    }
     $answer = $_POST['answer'];
     $question_id = $_POST['question_id'];
     $user_id = $_SESSION['user']['user_id'];
@@ -213,6 +325,11 @@ if (isset($_POST['signup'])) {
     }
     if (!isset($_SESSION['user']['user_id'])) {
         header("location: /Quesiono/login");
+        exit;
+    }
+    if (!is_verified($conn)) {
+        $_SESSION['error'] = "Please verify your email to create rich posts.";
+        header("location: /Quesiono/verify-code");
         exit;
     }
 
@@ -481,24 +598,104 @@ if (isset($_POST['signup'])) {
         echo "User not found";
     }
 } else if (isset($_GET['verifyEmail'])) {
-    $token = $_GET['verifyEmail'];
+    $token = trim($_GET['verifyEmail']);
     if (!$token || strlen($token) !== 64) {
         exit("Invalid verification link");
     }
-    $sel = $conn->prepare("SELECT user_id FROM email_verification_tokens WHERE token=? AND used=0 AND expires_at > NOW() LIMIT 1");
+    
+    // First check if the token exists and is not used
+    $sel = $conn->prepare("SELECT id, user_id, expires_at FROM email_verification_tokens WHERE token=? AND used=0 LIMIT 1");
     $sel->bind_param("s", $token);
     $sel->execute();
     $res = $sel->get_result();
+    
     if ($res->num_rows === 1) {
         $row = $res->fetch_assoc();
+        $tid = (int)$row['id'];
         $uid = (int)$row['user_id'];
-        $upd = $conn->prepare("UPDATE email_verification_tokens SET used=1 WHERE token=?");
-        $upd->bind_param("s", $token);
-        $upd->execute();
-        header("location: /Quesiono/verified");
+        $expiresAt = strtotime($row['expires_at']);
+
+        // Check if expired using PHP time to avoid MySQL timezone issues
+        if ($expiresAt > time()) {
+            // Mark user as verified
+            $updUser = $conn->prepare("UPDATE users SET verified=1 WHERE id=?");
+            $updUser->bind_param("i", $uid);
+            $updUser->execute();
+
+            // Mark token as used
+            $updToken = $conn->prepare("UPDATE email_verification_tokens SET used=1 WHERE id=?");
+            $updToken->bind_param("i", $tid);
+            $updToken->execute();
+
+            // Clear any existing session to force fresh login after verification
+            unset($_SESSION['user']);
+            unset($_SESSION['temp_verify_user']);
+            
+            header("location: /Quesiono/verified");
+            exit;
+        } else {
+            exit("This verification link has expired.");
+        }
     } else {
-        echo "Verification link is invalid or expired";
+        exit("Invalid or already used verification link");
     }
+} else if (isset($_POST['verifyCode'])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+    $code = trim($_POST['code']);
+    $email = trim($_POST['email']);
+
+    // Get user id from email
+    $uStmt = $conn->prepare("SELECT id FROM users WHERE email=? LIMIT 1");
+    $uStmt->bind_param("s", $email);
+    $uStmt->execute();
+    $uRes = $uStmt->get_result();
+    
+    if ($uRes->num_rows === 1) {
+        $uRow = $uRes->fetch_assoc();
+        $uid = (int)$uRow['id'];
+
+        // First check if the code exists and is not used
+        $sel = $conn->prepare("SELECT id, expires_at FROM email_verification_tokens WHERE user_id=? AND code=? AND used=0 LIMIT 1");
+        $sel->bind_param("is", $uid, $code);
+        $sel->execute();
+        $res = $sel->get_result();
+
+        if ($res->num_rows === 1) {
+            $tokenRow = $res->fetch_assoc();
+            $tid = (int)$tokenRow['id'];
+            $expiresAt = strtotime($tokenRow['expires_at']);
+
+            // Check if expired using PHP time to avoid MySQL timezone issues
+            if ($expiresAt > time()) {
+                // Mark user as verified
+                $updUser = $conn->prepare("UPDATE users SET verified=1 WHERE id=?");
+                $updUser->bind_param("i", $uid);
+                $updUser->execute();
+
+                // Mark token as used
+                $updToken = $conn->prepare("UPDATE email_verification_tokens SET used=1 WHERE id=?");
+                $updToken->bind_param("i", $tid);
+                $updToken->execute();
+
+                // Clear any existing session to force fresh login after verification
+                unset($_SESSION['user']);
+                unset($_SESSION['temp_verify_user']);
+
+                header("location: /Quesiono/verified");
+                exit;
+            } else {
+                $_SESSION['error'] = "This verification code has expired. Please sign up again.";
+            }
+        } else {
+            $_SESSION['error'] = "The code you entered is incorrect. Please check and try again.";
+        }
+    } else {
+        $_SESSION['error'] = "No account found with that email address.";
+    }
+    header("location: " . $_SERVER['HTTP_REFERER']);
+    exit;
 }
 
 /**

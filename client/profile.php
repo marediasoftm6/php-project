@@ -73,6 +73,18 @@
             <div class="row">
                 <!-- Main Profile Content -->
                 <div class="mt-4 col-12 col-lg-8">
+                    <?php if ($isOwnProfile && !is_verified_user($conn)): ?>
+                        <div class="alert alert-warning border-0 shadow-sm mb-4 p-4 d-flex align-items-center">
+                            <div class="me-3">
+                                <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1">Verify Your Account</h5>
+                                <p class="mb-2 small">Your account is not verified yet. Please verify your email to unlock all features like asking questions, answering, and posting articles.</p>
+                                <a href="verify-code" class="btn btn-warning btn-sm fw-bold rounded-pill px-4">Verify Now</a>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     <div class="profile-card-modern">
                         <div class="profile-main-info">
                             <div class="profile-avatar-xl"><?php echo $initial; ?></div>

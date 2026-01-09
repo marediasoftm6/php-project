@@ -20,7 +20,7 @@
             <div class="question-detail-card">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div class="user-inline">
-                        <a href="<?php echo $username; ?>" class="text-decoration-none d-flex align-items-center">
+                        <a href="<?php echo urlencode($row['username']); ?>" class="text-decoration-none d-flex align-items-center">
                             <span class="user-avatar-initial" style="width: 40px; height: 40px; font-size: 1rem;"><?php echo $initial; ?></span>
                             <div>
                                 <span class="user-name d-block fw-bold" style="color: var(--text);"><?php echo $username; ?></span>
@@ -48,7 +48,7 @@
                         <a href="<?php echo $row['slug']; ?>?edit-q=true" class="btn btn-sm btn-outline-primary px-3">
                             <i class="bi bi-pencil me-1"></i> Edit
                         </a>
-                        <a href="./server/requests.php?deleteQuestion=<?php echo $qid; ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" 
+                        <a href="./server/requests.php?delete=<?php echo $qid; ?>&csrf=<?php echo $_SESSION['csrf_token']; ?>" 
                            onclick="return confirm('Are you sure you want to delete this question?')"
                            class="btn btn-sm btn-outline-danger px-3 align-content-center">
                             <i class="bi bi-trash me-1"></i> Delete
@@ -88,24 +88,35 @@
             </div>
 
             <?php if (isset($_SESSION['user']['username'])) { ?>
-                <div class="answer-input-card mt-4">
+                <?php if (!is_verified_user($conn)): ?>
+                    <div class="alert alert-warning border-0 shadow-sm mt-4 p-4 d-flex align-items-center">
+                        <div class="me-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-1">Verification Required</h5>
+                            <p class="mb-2 small">You must verify your email to post answers. This helps us maintain a helpful community.</p>
+                            <a href="verify-code" class="btn btn-warning btn-sm fw-bold rounded-pill px-4">Verify Now</a>
+                        </div>
+                    </div>
+                <?php endif; ?>
+                <div class="answer-input-card mt-4 <?php echo !is_verified_user($conn) ? 'opacity-75 pointer-events-none' : ''; ?>">
                     <h4 class="mb-3" style="font-weight: 700;">Your Answer</h4>
                     <form action="./server/requests.php" method="post">
                         <input type="hidden" name="question_id" value="<?php echo $qid ?>">
                         <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
                         <div class="form-group mb-3">
-                            <textarea name="answer" class="form-control" placeholder="Share your knowledge or perspective..." rows="6" required></textarea>
+                            <textarea name="answer" class="form-control" placeholder="Share your knowledge or perspective..." rows="6" required <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>></textarea>
                         </div>
-                        <button type="submit" class="btn btn-primary">Post Your Answer</button>
+                        <button type="submit" class="btn btn-primary" <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>>Post Your Answer</button>
                     </form>
                 </div>
             <?php } else { ?>
-                <div class="profile-card-modern text-center mt-4">
-                    <p class="mb-3">Please login to answer this question.</p>
-                    <a href="login" class="btn btn-primary">Login Now</a>
-                </div>
-            <?php } ?>
-
+                  <div class="profile-card-modern text-center mt-4">
+                      <p class="mb-3">Please login to answer this question.</p>
+                      <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal" class="btn btn-primary">Login Now</a>
+                  </div>
+              <?php } ?>
         <?php } else { ?>
             <div class="profile-card-modern text-center">
                 <h2>Question not found</h2>
@@ -118,5 +129,5 @@
     <!-- Sidebar Column -->
     <div class="col-12 col-lg-4 mt-4 mt-lg-0">
         <?php include('sidebar.php'); ?>
-    </div>
-</div>
+    </div>  
+ </div>  

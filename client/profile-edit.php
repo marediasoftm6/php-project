@@ -6,7 +6,7 @@
     <?php
     include("./common/db.php");
     if (!isset($_SESSION['user']['user_id'])) {
-        echo "<div class='text-center p-4'><p>Please <a href='login'>login</a> to edit your profile.</p></div>";
+        echo "<div class='text-center p-4'><p>Please <a href='javascript:void(0)' data-bs-toggle='modal' data-bs-target='#loginModal'>login</a> to edit your profile.</p></div>";
     } else {
         $uid = (int)$_SESSION['user']['user_id'];
         

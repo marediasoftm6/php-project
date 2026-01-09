@@ -74,7 +74,7 @@
                                                 <i class="bi bi-trash me-2"></i>Delete
                                             </a></li>
                                         <?php } else { ?>
-                                            <li><a class="dropdown-item py-2" href="login">
+                                            <li><a class="dropdown-item py-2" href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#loginModal">
                                                 <i class="bi bi-box-arrow-in-right me-2"></i>Login to Edit
                                             </a></li>
                                         <?php } ?>

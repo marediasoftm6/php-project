@@ -67,7 +67,7 @@ $postsRes = $stmt->get_result();
                                     </p>
 
                                     <div class="border-top pt-3 mt-3 d-flex align-items-center justify-content-between">
-                                        <a href="<?php echo htmlspecialchars($p['username']); ?>" class="d-flex align-items-center text-decoration-none">
+                                        <a href="<?php echo urlencode($p['username']); ?>" class="d-flex align-items-center text-decoration-none">
                                             <div class="avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 10px;">
                                                 <?php echo strtoupper(substr($p['username'], 0, 1)); ?>
                                             </div>

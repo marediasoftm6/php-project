@@ -6,12 +6,12 @@ define('AUTH_HASH_ENABLED', false);
 // Mail configuration (PHPMailer)
 // MAIL_DRIVER: 'smtp' to use SMTP, 'mail' to use PHP's mail(), 'display' to skip sending and only display links
 if (!defined('MAIL_DRIVER')) define('MAIL_DRIVER', 'smtp');
-if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', 'no-reply@localhost');
+if (!defined('MAIL_FROM_EMAIL')) define('MAIL_FROM_EMAIL', 'muhammadshahzaibkhan2k20@gmail.com');
 if (!defined('MAIL_FROM_NAME')) define('MAIL_FROM_NAME', 'Quesiono');
-if (!defined('SMTP_HOST')) define('SMTP_HOST', '');
+if (!defined('SMTP_HOST')) define('SMTP_HOST', 'smtp.gmail.com');
 if (!defined('SMTP_PORT')) define('SMTP_PORT', 587);
-if (!defined('SMTP_USERNAME')) define('SMTP_USERNAME', '');
-if (!defined('SMTP_PASSWORD')) define('SMTP_PASSWORD', '');
+if (!defined('SMTP_USERNAME')) define('SMTP_USERNAME', 'muhammadshahzaibkhan2k20@gmail.com');
+if (!defined('SMTP_PASSWORD')) define('SMTP_PASSWORD', 'hhnpbjoihuqqdlhq');
 if (!defined('SMTP_SECURE')) define('SMTP_SECURE', 'tls'); // 'tls' or 'ssl'
 
 function send_email($to, $subject, $html)
@@ -23,7 +23,7 @@ function send_email($to, $subject, $html)
     // Try PHPMailer if available
     $phpmailerAvailable = false;
     $paths = [
-        __DIR__ . '/vendor/phpmailer/phpmailer/src',
+        __DIR__ . '/../vendor/phpmailer/phpmailer/src',
     ];
     foreach ($paths as $vendorBase) {
         if (is_file($vendorBase . '/PHPMailer.php') && is_file($vendorBase . '/SMTP.php') && is_file($vendorBase . '/Exception.php')) {
@@ -66,6 +66,7 @@ function send_email($to, $subject, $html)
             $mail->send();
             return true;
         } catch (\Throwable $e) {
+            error_log("PHPMailer Error: " . $e->getMessage());
             return false;
         }
     }

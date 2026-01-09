@@ -22,7 +22,7 @@
             <div class="answer-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div class="user-inline">
-                        <a href="<?php echo $username; ?>" class="text-decoration-none d-flex align-items-center">
+                        <a href="<?php echo urlencode($row["username"]); ?>" class="text-decoration-none d-flex align-items-center">
                             <span class="user-avatar-initial"><?php echo $initial; ?></span>
                             <span class="user-name small fw-semibold" style="color: var(--text-muted);"><?php echo $username; ?></span>
                         </a>

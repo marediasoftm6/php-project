@@ -59,7 +59,7 @@ if (!isset($_SESSION['user']['username'])) {
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 <?php echo !is_verified_user($conn) ? 'opacity-75 pointer-events-none' : ''; ?>">
         <!-- Editor Column -->
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
@@ -70,23 +70,27 @@ if (!isset($_SESSION['user']['username'])) {
                     <div class="mb-4">
                         <label class="form-label fw-bold" for="category">Category</label>
                         <p class="small text-muted mb-2">Select a category to help others find your post.</p>
-                        <?php include("category.php"); ?>
+                        <?php if (is_verified_user($conn)): ?>
+                            <?php include("category.php"); ?>
+                        <?php else: ?>
+                            <select class="form-control" disabled><option>Select a category</option></select>
+                        <?php endif; ?>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold" for="postTitle">Title</label>
-                        <input type="text" id="postTitle" class="form-control form-control-lg border-0 bg-light rounded-3" name="title" placeholder="Enter a catchy title..." required>
+                        <input type="text" id="postTitle" class="form-control form-control-lg border-0 bg-light rounded-3" name="title" placeholder="Enter a catchy title..." required <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold" for="postSubtitle">Subtitle (Optional)</label>
-                        <input type="text" id="postSubtitle" class="form-control border-0 bg-light rounded-3" name="subtitle" placeholder="Add a brief overview...">
+                        <input type="text" id="postSubtitle" class="form-control border-0 bg-light rounded-3" name="subtitle" placeholder="Add a brief overview..." <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-bold" for="postContent">Content</label>
                         <p class="small text-muted mb-2">Use double newlines for paragraphs. You can use simple HTML like &lt;b&gt;, &lt;i&gt;, or &lt;a&gt; for links.</p>
-                        <textarea id="postContent" class="form-control border-0 bg-light rounded-3" name="content" rows="12" placeholder="Write your amazing content here..." required></textarea>
+                        <textarea id="postContent" class="form-control border-0 bg-light rounded-3" name="content" rows="12" placeholder="Write your amazing content here..." required <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>></textarea>
                     </div>
 
                     <div class="mb-4">

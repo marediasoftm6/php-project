@@ -17,6 +17,8 @@ if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['
     // 1. Check for Static Routes first
     if ($path === 'about') {
         $_GET['about'] = 'true';
+    } else if ($path === 'privacy') {
+        $_GET['privacy'] = 'true';
     } else if ($path === 'signup') {
         $_GET['signup'] = 'true';
     } else if ($path === 'login') {
@@ -39,11 +41,14 @@ if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['
         $_GET['settings'] = 'true';
     } else if ($path === 'verified') {
         $_GET['verified'] = 'true';
+    } else if ($path === 'verify-code') {
+        $_GET['verify-code'] = 'true';
     } else {
         // 2. Check for Dynamic Routes (Profile, Question, Category, Post)
         // Check if path matches a username (Profile)
+        $decodedPath = urldecode($path);
         $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
-        $stmt->bind_param("s", $path);
+        $stmt->bind_param("s", $decodedPath);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res->num_rows > 0) {
@@ -130,6 +135,8 @@ if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['
             include('./client/questions.php');
         } else if (isset($_GET['about'])) {
             include('./client/about.php');
+        } else if (isset($_GET['privacy'])) {
+            include('./client/privacy.php');
         } else if (isset($_GET['post'])) {
             include('./client/post.php');
         } else if (isset($_GET['post-id'])) {
@@ -144,6 +151,8 @@ if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['
             include('./client/settings.php');
         } else if (isset($_GET['verified'])) {
             include('./client/verified.php');
+        } else if (isset($_GET['verify-code'])) {
+            include('./client/verify-code.php');
         } else if (isset($_GET['notifications'])) {
             include('./client/notifications.php');
         } else {
