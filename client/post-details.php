@@ -10,7 +10,7 @@ $post_id = (int)$_GET['post-id'];
 
 // Fetch post with user info and category
 $stmt = $conn->prepare("
-    SELECT p.*, u.username, c.name as category_name 
+    SELECT p.*, u.username, u.profile_pic, c.name as category_name 
     FROM posts p 
     JOIN users u ON p.user_id = u.id 
     LEFT JOIN category c ON p.category_id = c.id 
@@ -24,6 +24,10 @@ if (!$post) {
     echo "<div class='container py-5 text-center'><h2>Post not found</h2><a href='index.php' class='btn btn-primary mt-3'>Back to Home</a></div>";
     exit();
 }
+
+$username = htmlspecialchars($post['username']);
+$profilePic = $post['profile_pic'];
+$initial = strtoupper(substr($username, 0, 1));
 
 // Update views count
 $conn->query("UPDATE posts SET views_count = views_count + 1 WHERE id = $post_id");
@@ -50,10 +54,14 @@ $formattedContent = nl2br($post['content']);
                             <?php endif; ?>
                             <div class="d-flex align-items-center mt-4 text-muted small">
                                 <a href="<?php echo urlencode($post['username']); ?>" class="text-decoration-none d-flex align-items-center text-muted">
-                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
-                                        <?php echo strtoupper(substr($post['username'], 0, 1)); ?>
+                                    <div class="user-avatar-initial user-avatar-sm me-2">
+                                        <?php if ($profilePic): ?>
+                                            <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                                        <?php else: ?>
+                                            <?php echo $initial; ?>
+                                        <?php endif; ?>
                                     </div>
-                                    <span>By <strong><?php echo htmlspecialchars($post['username']); ?></strong></span>
+                                    <span>By <strong><?php echo $username; ?></strong></span>
                                 </a>
                                 <span class="mx-2">•</span>
                                 <span><?php echo date('M d, Y', strtotime($post['created_at'])); ?></span>

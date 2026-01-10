@@ -23,7 +23,7 @@
         // Check and award badges on view
         check_and_award_badges($conn, $uid);
         
-        $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at FROM users WHERE id=? LIMIT 1");
+        $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at, profile_pic FROM users WHERE id=? LIMIT 1");
         $stmt->bind_param("i", $uid);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -38,6 +38,7 @@
             $gender = htmlspecialchars($row['gender'] ?? '', ENT_QUOTES, 'UTF-8');
             $birthdate = htmlspecialchars($row['birthdate'] ?? '', ENT_QUOTES, 'UTF-8');
             $createdAt = $row['created_at'] ?? date('Y-m-d H:i:s');
+            $profilePic = $row['profile_pic'];
             $joinedDate = date('M Y', strtotime($createdAt));
             $joinedYear = date('Y', strtotime($createdAt));
             
@@ -77,6 +78,18 @@
             <div class="row">
                 <!-- Main Profile Content -->
                 <div class="mt-4 col-12 col-lg-8">
+                    <?php if (isset($_SESSION['error'])): ?>
+                        <div class="alert alert-danger border-0 small mb-4">
+                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (isset($_SESSION['notice'])): ?>
+                        <div class="alert alert-info border-0 small mb-4">
+                            <?php echo $_SESSION['notice']; unset($_SESSION['notice']); ?>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if ($isOwnProfile && !is_verified_user($conn)): ?>
                         <div class="alert alert-warning border-0 shadow-sm mb-4 p-4 d-flex align-items-center">
                             <div class="me-3">
@@ -91,7 +104,23 @@
                     <?php endif; ?>
                     <div class="profile-card-modern">
                         <div class="profile-main-info">
-                            <div class="profile-avatar-xl"><?php echo $initial; ?></div>
+                            <div class="profile-avatar-xl-wrapper">
+                                <?php if ($profilePic): ?>
+                                    <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="Profile" class="profile-avatar-xl">
+                                <?php else: ?>
+                                    <div class="profile-avatar-xl"><?php echo $initial; ?></div>
+                                <?php endif; ?>
+                                
+                                <?php if ($isOwnProfile): ?>
+                                    <form id="profile-pic-form" action="./server/requests.php" method="POST" enctype="multipart/form-data" class="d-none">
+                                        <input type="file" name="profile_pic" id="profile-pic-input" accept="image/*" onchange="document.getElementById('profile-pic-form').submit()">
+                                        <input type="hidden" name="update_profile_pic" value="1">
+                                    </form>
+                                    <button class="profile-avatar-edit-btn" onclick="document.getElementById('profile-pic-input').click()" title="Change Profile Picture">
+                                        <i class="bi bi-camera-fill"></i>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                             <div class="profile-details">
                                 <div class="profile-name-row">
                                     <h2><?php echo $displayUsername; ?></h2>
@@ -150,7 +179,13 @@
                         <div id="answers-tab" class="tab-content">
                             <h5 class="mb-4">Recent Answers</h5>
                             <?php
-                            $ansStmt = $conn->prepare("SELECT a.*, q.title as q_title, q.slug as q_slug FROM answers a JOIN questions q ON q.id = a.question_id WHERE a.user_id = ? ORDER BY a.id DESC");
+                            $ansStmt = $conn->prepare("SELECT a.*, q.title as q_title, q.slug as q_slug, u.username as author_name, u.profile_pic as author_pic,
+                                                      (SELECT COUNT(*) FROM answers a2 WHERE a2.question_id = q.id) as acnt
+                                                      FROM answers a 
+                                                      JOIN questions q ON q.id = a.question_id 
+                                                      JOIN users u ON u.id = a.user_id
+                                                      WHERE a.user_id = ? 
+                                                      ORDER BY a.id DESC");
                             $ansStmt->bind_param("i", $uid);
                             $ansStmt->execute();
                             $ansRes = $ansStmt->get_result();
@@ -158,10 +193,45 @@
                                 echo "<p class='text-muted'>No answers posted yet.</p>";
                             } else {
                                 foreach ($ansRes as $ans) {
+                                    $ansContent = htmlspecialchars(strip_tags($ans['answer']), ENT_QUOTES, 'UTF-8');
+                                    $qTitle = htmlspecialchars($ans['q_title'], ENT_QUOTES, 'UTF-8');
+                                    $qSlug = htmlspecialchars($ans['q_slug'], ENT_QUOTES, 'UTF-8');
+                                    $ansAuthor = htmlspecialchars($ans['author_name'], ENT_QUOTES, 'UTF-8');
+                                    $ansDate = date('M Y', strtotime($ans['created_at']));
+                                    $displayInitial = strtoupper(substr($ansAuthor, 0, 1));
                                     ?>
-                                    <div class="answer-card mb-3">
-                                        <h6 class="mb-2"><a href="<?php echo htmlspecialchars($ans['q_slug']); ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($ans['q_title']); ?></a></h6>
-                                        <p class="small mb-0 text-muted"><?php echo htmlspecialchars(substr($ans['answer'], 0, 150)) . (strlen($ans['answer']) > 150 ? '...' : ''); ?></p>
+                                    <div class="qa-card-reference">
+                                        <div class="card-header">
+                                            <div class="user-avatar">
+                                                <?php if ($ans['author_pic']): ?>
+                                                    <img src="<?php echo htmlspecialchars($ans['author_pic']); ?>" alt="<?php echo $ansAuthor; ?>" class="w-100 h-100 object-fit-contain rounded-circle">
+                                                <?php else: ?>
+                                                    <?php echo $displayInitial; ?>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="user-info">
+                                                <div>
+                                                    <a href="<?php echo urlencode($ansAuthor); ?>" class="user-name"><?php echo $ansAuthor; ?></a>
+                                                </div>
+                                                <div class="user-meta">
+                                                    Answered · <?php echo $ansDate; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <a href="<?php echo $qSlug; ?>" class="question-title"><?php echo $qTitle; ?></a>
+
+                                        <div class="answer-snippet">
+                                            <?php echo $ansContent; ?>
+                                        </div>
+                                        <a href="<?php echo $qSlug; ?>" class="read-more small">(more)</a>
+
+                                        <div class="card-footer mt-2">
+                                            <a href="<?php echo $qSlug; ?>#answer-form" class="action-item text-decoration-none" title="Answers">
+                                                <i class="bi bi-chat-dots"></i>
+                                                <span><?php echo $ans['acnt']; ?> Answers</span>
+                                            </a>
+                                        </div>
                                     </div>
                                     <?php
                                 }
@@ -172,7 +242,16 @@
                         <div id="questions-tab" class="tab-content">
                             <h5 class="mb-4">Recent Questions</h5>
                             <?php
-                            $qStmt = $conn->prepare("SELECT q.*, (SELECT COUNT(*) FROM answers WHERE question_id = q.id) as acnt FROM questions q WHERE q.user_id = ? ORDER BY q.id DESC");
+                            $qStmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.username, u.profile_pic as author_pic,
+                                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_pic,
+                                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                                    FROM questions q 
+                                                    JOIN users u ON u.id = q.user_id 
+                                                    WHERE q.user_id = ? 
+                                                    ORDER BY q.id DESC");
                             $qStmt->bind_param("i", $uid);
                             $qStmt->execute();
                             $qRes = $qStmt->get_result();
@@ -180,10 +259,63 @@
                                 echo "<p class='text-muted'>No questions asked yet.</p>";
                             } else {
                                 foreach ($qRes as $q) {
+                                    $topAnswer = $q['top_answer'] ? htmlspecialchars(strip_tags($q['top_answer']), ENT_QUOTES, 'UTF-8') : null;
+                                    $answererName = $q['answerer_username'] ? htmlspecialchars($q['answerer_username'], ENT_QUOTES, 'UTF-8') : null;
+                                    $answerDate = $q['answer_date'] ?? $q['created_at'];
+                                    $timeAgo = date('M Y', strtotime($answerDate));
+                                    
+                                    $displayUser = $answererName ?? htmlspecialchars($q['username'], ENT_QUOTES, 'UTF-8');
+                                    $displayInitial = strtoupper(substr($displayUser, 0, 1));
+                                    $displayProfilePic = $answererName ? $q['answerer_pic'] : $q['author_pic'];
                                     ?>
-                                    <div class="question-list mb-3">
-                                        <h6 class="mb-2"><a href="<?php echo htmlspecialchars($q['slug']); ?>" class="text-decoration-none text-primary"><?php echo htmlspecialchars($q['title']); ?></a></h6>
-                                        <span class="badge-category"><?php echo $q['acnt']; ?> Answers</span>
+                                    <div class="qa-card-reference">
+                                        <div class="card-header">
+                                            <div class="user-avatar">
+                                                <?php if ($displayProfilePic): ?>
+                                                    <img src="<?php echo htmlspecialchars($displayProfilePic); ?>" alt="<?php echo $displayUser; ?>" class="w-100 h-100 object-fit-cover rounded-circle">
+                                                <?php else: ?>
+                                                    <?php echo $displayInitial; ?>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="user-info">
+                                                <div>
+                                                    <a href="<?php echo urlencode($displayUser); ?>" class="user-name"><?php echo $displayUser; ?></a>
+                                                </div>
+                                                <div class="user-meta">
+                                                    <?php echo $answererName ? "Answered" : "Asked"; ?> · <?php echo $timeAgo; ?>
+                                                </div>
+                                            </div>
+                                            <div class="dropdown ms-auto">
+                                                <button class="btn p-0 border-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                                    <li>
+                                                        <a class="dropdown-item py-2" href="javascript:void(0)" onclick="navigator.clipboard.writeText('<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/' . $q['slug']; ?>').then(() => alert('Link copied to clipboard!'))">
+                                                            <i class="bi bi-share me-2"></i>Share
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>
+
+                                        <a href="<?php echo htmlspecialchars($q['slug']); ?>" class="question-title"><?php echo htmlspecialchars($q['title']); ?></a>
+
+                                        <?php if ($topAnswer): ?>
+                                            <div class="answer-snippet">
+                                                <?php echo $topAnswer; ?>
+                                            </div>
+                                            <a href="<?php echo htmlspecialchars($q['slug']); ?>" class="read-more small">(more)</a>
+                                        <?php else: ?>
+                                            <div class="text-muted small mb-2">No answers yet.</div>
+                                        <?php endif; ?>
+
+                                        <div class="card-footer mt-2">
+                                            <a href="<?php echo htmlspecialchars($q['slug']); ?>#answer-form" class="action-item text-decoration-none" title="Answers">
+                                                <i class="bi bi-chat-dots"></i>
+                                                <span><?php echo $q['acnt']; ?> Answers</span>
+                                            </a>
+                                        </div>
                                     </div>
                                     <?php
                                 }

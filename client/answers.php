@@ -1,7 +1,7 @@
 <div class="answers-list">
     <?php
     include("./common/db.php");
-    $stmt = $conn->prepare("select a.id, a.answer, a.user_id, u.username from answers a join users u on u.id=a.user_id where a.question_id = ? order by a.id desc");
+    $stmt = $conn->prepare("select a.id, a.answer, a.user_id, u.username, u.profile_pic from answers a join users u on u.id=a.user_id where a.question_id = ? order by a.id desc");
     $stmt->bind_param("i", $qid);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -15,33 +15,48 @@
             $ansUserId = $row["user_id"];
             $username = htmlspecialchars($row["username"], ENT_QUOTES, 'UTF-8');
             $initial = strtoupper(substr($username, 0, 1));
+            $profilePic = $row['profile_pic'];
             $owner = isset($_SESSION['user']['user_id']) && ((int)$_SESSION['user']['user_id'] === (int)$row['user_id']);
             $deleteLink = "./server/requests.php?deleteAnswer=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
             $editLink = "$qslug?edit-a=$id";
-            ?>
+    ?>
             <div class="answer-card">
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div class="user-inline">
                         <a href="<?php echo urlencode($row["username"]); ?>" class="text-decoration-none d-flex align-items-center">
-                            <span class="user-avatar-initial"><?php echo $initial; ?></span>
+                            <span class="user-avatar-initial user-avatar-sm me-2">
+                                <?php if ($profilePic): ?>
+                                    <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                                <?php else: ?>
+                                    <?php echo $initial; ?>
+                                <?php endif; ?>
+                            </span>
                             <span class="user-name small fw-semibold" style="color: var(--text-muted);"><?php echo $username; ?></span>
                         </a>
                     </div>
-                    <?php if ($owner && !isset($_GET['edit-a'])) { ?>
-                        <div class="dropdown">
-                            <button class="btn row-actions-toggle" type="button" data-bs-toggle="dropdown">
-                                <i class="bi bi-three-dots"></i>
-                            </button>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                    <div class="dropdown">
+                        <button class="btn p-0 border-0 text-muted" type="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                            <li>
+                                <a class="dropdown-item py-2" href="javascript:void(0)" onclick="navigator.clipboard.writeText('<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/' . $qslug . '#answer-' . $id; ?>').then(() => alert('Link copied to clipboard!'))">
+                                    <i class="bi bi-share me-2"></i>Share
+                                </a>
+                            </li>
+                            <?php if ($owner && !isset($_GET['edit-a'])) { ?>
+                                <li>
+                                    <hr class="dropdown-divider">
+                                </li>
                                 <li><a class="dropdown-item py-2" href="<?php echo $editLink; ?>">
-                                    <i class="bi bi-pencil me-2"></i>Edit
-                                </a></li>
+                                        <i class="bi bi-pencil me-2"></i>Edit
+                                    </a></li>
                                 <li><a class="dropdown-item py-2 text-danger" href="<?php echo $deleteLink; ?>" onclick="return confirm('Delete this answer?')">
-                                    <i class="bi bi-trash me-2"></i>Delete
-                                </a></li>
-                            </ul>
-                        </div>
-                    <?php } ?>
+                                        <i class="bi bi-trash me-2"></i>Delete
+                                    </a></li>
+                            <?php } ?>
+                        </ul>
+                    </div>
                 </div>
 
                 <div class="answer-content" style="color: var(--text-muted); line-height: 1.7; white-space: pre-wrap; font-size: 1.05rem;"><?php echo $answer; ?></div>
@@ -63,7 +78,7 @@
                     </div>
                 <?php } ?>
             </div>
-            <?php
+    <?php
         }
     }
     ?>

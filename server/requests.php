@@ -59,6 +59,61 @@ if (isset($_GET['markRead'])) {
     }
     header("location: " . $_SERVER['HTTP_REFERER']);
     exit;
+} else if (isset($_POST['update_profile_pic'])) {
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/login");
+        exit;
+    }
+
+    $uid = $_SESSION['user']['user_id'];
+    if (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+        $file = $_FILES['profile_pic'];
+        $fileName = $file['name'];
+        $fileTmpName = $file['tmp_name'];
+        $fileSize = $file['size'];
+        $fileActualExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        $allowed = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+
+        if (in_array($fileActualExt, $allowed)) {
+            if ($fileSize < 5000000) { // 5MB limit
+                $fileNameNew = "profile_" . $uid . "_" . uniqid('', true) . "." . $fileActualExt;
+                $fileDestination = '../public/uploads/profile_pics/' . $fileNameNew;
+                $dbPath = 'public/uploads/profile_pics/' . $fileNameNew;
+
+                // Delete old profile pic if exists
+                $getOld = $conn->prepare("SELECT profile_pic FROM users WHERE id=?");
+                $getOld->bind_param("i", $uid);
+                $getOld->execute();
+                $oldPic = $getOld->get_result()->fetch_assoc()['profile_pic'];
+                if ($oldPic && file_exists('../' . $oldPic)) {
+                    unlink('../' . $oldPic);
+                }
+
+                if (move_uploaded_file($fileTmpName, $fileDestination)) {
+                    $upd = $conn->prepare("UPDATE users SET profile_pic=? WHERE id=?");
+                    $upd->bind_param("si", $dbPath, $uid);
+                    if ($upd->execute()) {
+                        $_SESSION['user']['profile_pic'] = $dbPath;
+                        header("location: " . $_SERVER['HTTP_REFERER']);
+                        exit;
+                    } else {
+                        $_SESSION['error'] = "Database update failed.";
+                    }
+                } else {
+                    $_SESSION['error'] = "File upload failed.";
+                }
+            } else {
+                $_SESSION['error'] = "File is too big! (Max 5MB)";
+            }
+        } else {
+            $_SESSION['error'] = "Invalid file type! Allowed: jpg, jpeg, png, gif, webp";
+        }
+    } else {
+        $_SESSION['error'] = "No file uploaded or upload error.";
+    }
+    header("location: " . $_SERVER['HTTP_REFERER']);
+    exit;
 }
 
 /**
@@ -235,7 +290,7 @@ if (isset($_POST['signup'])) {
     }
     $email = $_POST['email'];
     $password = $_POST['password'];
-    $stmt = $conn->prepare("SELECT id, username, password, verified FROM users WHERE email=? LIMIT 1");
+    $stmt = $conn->prepare("SELECT id, username, password, verified, profile_pic FROM users WHERE email=? LIMIT 1");
     $stmt->bind_param("s", $email);
     $stmt->execute();
     $res = $stmt->get_result();
@@ -250,7 +305,12 @@ if (isset($_POST['signup'])) {
                 header("location: /Quesiono/verify-code");
                 exit;
             }
-            $_SESSION["user"] = ["username" => $row['username'], "email" => $email, "user_id" => $row['id']];
+            $_SESSION["user"] = [
+                "username" => $row['username'], 
+                "email" => $email, 
+                "user_id" => $row['id'],
+                "profile_pic" => $row['profile_pic']
+            ];
             header("location: /Quesiono/");
             exit;
         }

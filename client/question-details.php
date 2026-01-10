@@ -2,7 +2,7 @@
     <div class="col-12 col-lg-8">
         <?php
         include("./common/db.php");
-        $stmt = $conn->prepare("select q.*, u.username from questions q join users u on u.id = q.user_id where q.id = ?");
+        $stmt = $conn->prepare("select q.*, u.username, u.profile_pic from questions q join users u on u.id = q.user_id where q.id = ?");
         $stmt->bind_param("i", $qid);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -15,13 +15,20 @@
             $descSafe = htmlspecialchars($row['description'] ?? '', ENT_QUOTES, 'UTF-8');
             $username = htmlspecialchars($row['username'], ENT_QUOTES, 'UTF-8');
             $initial = strtoupper(substr($username, 0, 1));
+            $profilePic = $row['profile_pic'];
             ?>
             
             <div class="question-detail-card">
                 <div class="d-flex justify-content-between align-items-start mb-4">
                     <div class="user-inline">
                         <a href="<?php echo urlencode($row['username']); ?>" class="text-decoration-none d-flex align-items-center">
-                            <span class="user-avatar-initial" style="width: 40px; height: 40px; font-size: 1rem;"><?php echo $initial; ?></span>
+                            <span class="user-avatar-initial user-avatar-md me-2">
+                                <?php if ($profilePic): ?>
+                                    <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                                <?php else: ?>
+                                    <?php echo $initial; ?>
+                                <?php endif; ?>
+                            </span>
                             <div>
                                 <span class="user-name d-block fw-bold" style="color: var(--text);"><?php echo $username; ?></span>
                                 <small class="text-muted">Asked a question</small>
@@ -100,7 +107,7 @@
                         </div>
                     </div>
                 <?php endif; ?>
-                <div class="answer-input-card mt-4 <?php echo !is_verified_user($conn) ? 'opacity-75 pointer-events-none' : ''; ?>">
+                <div id="answer-form" class="answer-input-card mt-4 <?php echo !is_verified_user($conn) ? 'opacity-75 pointer-events-none' : ''; ?>">
                     <h4 class="mb-3" style="font-weight: 700;">Your Answer</h4>
                     <form action="./server/requests.php" method="post">
                         <input type="hidden" name="question_id" value="<?php echo $qid ?>">

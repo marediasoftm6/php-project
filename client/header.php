@@ -158,10 +158,14 @@ include_once(__DIR__ . "/../common/db.php");
         <div class="dropdown user-dropdown">
           <button class="btn user-toggle d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             <div class="user-avatar-small">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
-                <path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-              </svg>
+              <?php if (isset($_SESSION['user']['profile_pic']) && $_SESSION['user']['profile_pic']): ?>
+                <img src="<?php echo htmlspecialchars($_SESSION['user']['profile_pic']); ?>" alt="Profile" class="w-100 h-100 object-fit-cover rounded-circle">
+              <?php else: ?>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                  <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2"/>
+                  <path d="M4 21c0-4 4-7 8-7s8 3 8 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+              <?php endif; ?>
             </div>
             <span class="d-none d-sm-inline"><?php echo (isset($_SESSION['user']['username']) && is_verified_user($conn)) ? htmlspecialchars($_SESSION['user']['username']) : 'Account'; ?></span>
           </button>

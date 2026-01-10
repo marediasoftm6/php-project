@@ -106,7 +106,7 @@ include_once(__DIR__ . "/../common/db.php");
         <h5 class="mb-4" style="font-weight: 700; color: var(--text);">Top Contributors</h5>
         <div class="contributors-list">
             <?php
-            $topUsersQuery = "SELECT u.id, u.username, COUNT(a.id) as answer_count 
+            $topUsersQuery = "SELECT u.id, u.username, u.profile_pic, COUNT(a.id) as answer_count 
                              FROM users u 
                              JOIN answers a ON a.user_id = u.id 
                              GROUP BY u.id 
@@ -115,11 +115,17 @@ include_once(__DIR__ . "/../common/db.php");
             $topUsersRes = $conn->query($topUsersQuery);
             if ($topUsersRes && $topUsersRes->num_rows > 0):
                 while($tu = $topUsersRes->fetch_assoc()):
-                    $initial = strtoupper(substr($tu['username'], 0, 1));
+                    $username = htmlspecialchars($tu['username']);
+                    $initial = strtoupper(substr($username, 0, 1));
+                    $profilePic = $tu['profile_pic'];
             ?>
                 <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
-                    <div class="user-avatar-initial small" style="width: 55px; height: 55px; font-size: 1.5rem;">
-                        <?php echo $initial; ?>
+                    <div class="user-avatar-initial user-avatar-md">
+                        <?php if ($profilePic): ?>
+                            <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                        <?php else: ?>
+                            <?php echo $initial; ?>
+                        <?php endif; ?>
                     </div>
                     <div class="flex-grow-1">
                         <a href="<?php echo htmlspecialchars($tu['username']); ?>" class="text-decoration-none text-dark fw-bold d-block">

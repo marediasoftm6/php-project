@@ -89,7 +89,7 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
                 <?php
                 // Get 5 most recent badge awards
                 $recentAwards = $conn->query("
-                    SELECT u.username, b.name as badge_name, b.icon
+                    SELECT u.username, u.profile_pic, b.name as badge_name, b.icon
                     FROM user_badges ub 
                     JOIN users u ON ub.user_id = u.id 
                     JOIN badges b ON ub.badge_id = b.id 
@@ -99,10 +99,17 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
 
                 if ($recentAwards->num_rows > 0) {
                     while ($award = $recentAwards->fetch_assoc()) {
+                        $username = htmlspecialchars($award['username']);
+                        $profilePic = $award['profile_pic'];
+                        $initial = strtoupper(substr($username, 0, 1));
                         ?>
                         <div class="d-flex align-items-center p-3 mb-3 border rounded-4 hover-bg-light transition-all">
-                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; min-width: 40px;">
-                                <?php echo strtoupper(substr($award['username'], 0, 1)); ?>
+                            <div class="user-avatar-initial user-avatar-md me-3">
+                                <?php if ($profilePic): ?>
+                                    <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                                <?php else: ?>
+                                    <?php echo $initial; ?>
+                                <?php endif; ?>
                             </div>
                             <div class="flex-grow-1">
                                 <div class="small">

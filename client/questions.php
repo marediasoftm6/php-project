@@ -11,7 +11,16 @@
             $catName = $catStmt->get_result()->fetch_assoc()['name'] ?? 'Category';
             $heading = "$catName Questions";
 
-            $stmt = $conn->prepare("select q.id, q.title, q.slug, u.id as user_id, u.username, count(a.id) as acnt from questions q left join answers a on a.question_id=q.id join users u on u.id=q.user_id where q.category_id=? group by q.id, q.title, q.slug, u.id, u.username order by q.id desc");
+            $stmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.id as user_id, u.username, u.profile_pic,
+                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_profile_pic,
+                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                    FROM questions q 
+                                    JOIN users u ON u.id = q.user_id 
+                                    WHERE q.category_id=? 
+                                    ORDER BY q.id DESC");
             $stmt->bind_param("i", $cid);
             $stmt->execute();
             $result = $stmt->get_result();
@@ -23,27 +32,61 @@
             $uName = $uStmt->get_result()->fetch_assoc()['username'] ?? 'User';
             $heading = ucfirst($uName) . "'s Questions";
 
-            $stmt = $conn->prepare("select q.id, q.title, q.slug, u.id as user_id, u.username, count(a.id) as acnt from questions q left join answers a on a.question_id=q.id join users u on u.id=q.user_id where q.user_id=? group by q.id, q.title, q.slug, u.id, u.username order by q.id desc");
+            $stmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.id as user_id, u.username, u.profile_pic, 
+                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_profile_pic,
+                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                    FROM questions q 
+                                    JOIN users u ON u.id = q.user_id 
+                                    WHERE q.user_id=? 
+                                    ORDER BY q.id DESC");
             $stmt->bind_param("i", $uid);
             $stmt->execute();
             $result = $stmt->get_result();
         } else if (isset($_GET["latest"])) {
             $heading = "Latest Questions";
-            $stmt = $conn->prepare("select q.id, q.title, q.slug, u.id as user_id, u.username, count(a.id) as acnt from questions q left join answers a on a.question_id=q.id join users u on u.id=q.user_id group by q.id, q.title, q.slug, u.id, u.username order by q.id desc");
+            $stmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.id as user_id, u.username, u.profile_pic, 
+                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_profile_pic,
+                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                    FROM questions q 
+                                    JOIN users u ON u.id = q.user_id 
+                                    ORDER BY q.id DESC");
             $stmt->execute();
             $result = $stmt->get_result();
         } else if (isset($_GET["search"])) {
             $heading = "Search Results for '" . htmlspecialchars($_GET["search"]) . "'";
             $searchTerm = $_GET["search"];
             $like = "%" . $searchTerm . "%";
-            $stmt = $conn->prepare("select q.id, q.title, q.slug, u.id as user_id, u.username, count(a.id) as acnt from questions q left join answers a on a.question_id=q.id join users u on u.id=q.user_id where q.title like ? or q.description like ? group by q.id, q.title, q.slug, u.id, u.username order by q.id desc");
+            $stmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.id as user_id, u.username, u.profile_pic,
+                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_profile_pic,
+                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                    FROM questions q 
+                                    JOIN users u ON u.id = q.user_id 
+                                    WHERE q.title LIKE ? OR q.description LIKE ? 
+                                    ORDER BY q.id DESC");
             $stmt->bind_param("ss", $like, $like);
             $stmt->execute();
             $result = $stmt->get_result();
         } else {
             $showHero = true;
             $heading = "All Questions";
-            $stmt = $conn->prepare("select q.id, q.title, q.slug, u.id as user_id, u.username, count(a.id) as acnt from questions q left join answers a on a.question_id=q.id join users u on u.id=q.user_id group by q.id, q.title, q.slug, u.id, u.username");
+            $stmt = $conn->prepare("SELECT q.id, q.title, q.slug, q.created_at, u.id as user_id, u.username, u.profile_pic,
+                                    (SELECT a.answer FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as top_answer,
+                                    (SELECT au.username FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_username,
+                                    (SELECT au.profile_pic FROM answers a JOIN users au ON a.user_id = au.id WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answerer_profile_pic,
+                                    (SELECT a.created_at FROM answers a WHERE a.question_id = q.id ORDER BY a.id DESC LIMIT 1) as answer_date,
+                                    (SELECT COUNT(*) FROM answers a WHERE a.question_id = q.id) as acnt 
+                                    FROM questions q 
+                                    JOIN users u ON u.id = q.user_id 
+                                    ORDER BY q.id DESC");
             $stmt->execute();
             $result = $stmt->get_result();
         }
@@ -96,43 +139,80 @@
                 $acnt = isset($row["acnt"]) ? (int)$row["acnt"] : 0;
                 $username = htmlspecialchars($row["username"], ENT_QUOTES, 'UTF-8');
                 $initial = strtoupper(substr($username, 0, 1));
+
+                $topAnswer = $row['top_answer'] ? htmlspecialchars(strip_tags($row['top_answer']), ENT_QUOTES, 'UTF-8') : null;
+                $answererName = $row['answerer_username'] ? htmlspecialchars($row['answerer_username'], ENT_QUOTES, 'UTF-8') : null;
+                $answerDate = $row['answer_date'] ?? $row['created_at'];
+                $timeAgo = date('M Y', strtotime($answerDate)); // Simplified time ago
+
+                $displayUser = $answererName ?? $username;
+                $displayInitial = strtoupper(substr($displayUser, 0, 1));
+                $displayProfilePic = $answererName ? ($row['answerer_profile_pic'] ?? null) : ($row['profile_pic'] ?? null);
+
                 $deleteLink = "./server/requests.php?delete=" . $id . "&csrf=" . urlencode($_SESSION['csrf_token']);
                 $editLink = "$slug?edit-q=true";
             ?>
-                <div class="question-list">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div class="user-inline">
-                            <a href="<?php echo urlencode($row["username"]); ?>" class="text-decoration-none d-flex align-items-center">
-                                <span class="user-avatar-initial"><?php echo $initial; ?></span>
-                                <span class="user-name small fw-semibold" style="color: var(--text-muted);"><?php echo $username; ?></span>
-                            </a>
+                <div class="qa-card-reference">
+                    <div class="card-header">
+                        <div class="user-avatar">
+                            <?php if ($displayProfilePic): ?>
+                                <img src="<?php echo htmlspecialchars($displayProfilePic); ?>" alt="<?php echo $displayUser; ?>" class="w-100 h-100 object-fit-contain rounded-circle">
+                            <?php else: ?>
+                                <?php echo $displayInitial; ?>
+                            <?php endif; ?>
                         </div>
-                        <?php if ($isMyQnA): ?>
-                            <div class="dropdown">
-                                <button class="btn row-actions-toggle" type="button" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                        <div class="user-info">
+                            <div>
+                                <a href="<?php echo urlencode($displayUser); ?>" class="user-name"><?php echo $displayUser; ?></a>
+                                <?php if ($answererName): ?>
+                                    <a href="javascript:void(0)" class="follow-btn">· Follow</a>
+                                <?php endif; ?>
+                            </div>
+                            <div class="user-meta">
+                                <?php echo $answererName ? "Answered" : "Asked"; ?> · <?php echo $timeAgo; ?>
+                            </div>
+                        </div>
+                        <div class="dropdown ms-auto">
+                            <button class="btn p-0 border-0 text-muted" type="button" data-bs-toggle="dropdown">
+                                <i class="bi bi-three-dots"></i>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li>
+                                    <a class="dropdown-item py-2" href="javascript:void(0)" onclick="navigator.clipboard.writeText('<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/' . $slug; ?>').then(() => alert('Link copied to clipboard!'))">
+                                        <i class="bi bi-share me-2"></i>Share
+                                    </a>
+                                </li>
+                                <?php if ($isMyQnA): ?>
+                                    <li>
+                                        <hr class="dropdown-divider">
+                                    </li>
                                     <li><a class="dropdown-item py-2" href="<?php echo $editLink; ?>">
                                             <i class="bi bi-pencil me-2"></i>Edit
                                         </a></li>
                                     <li><a class="dropdown-item py-2 text-danger" href="<?php echo $deleteLink; ?>" onclick="return confirm('Are you sure you want to delete this question?')">
                                             <i class="bi bi-trash me-2"></i>Delete
                                         </a></li>
-                                </ul>
-                            </div>
-                        <?php endif; ?>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
                     </div>
-                    <a href="<?php echo $slug; ?>" class="question-title text-decoration-none"><?php echo $title; ?></a>
 
-                    <div class="question-stats">
-                        <div class="stat-item">
-                            <i class="bi bi-chat-left-text"></i>
-                            <span><?php echo $acnt; ?> <?php echo $acnt === 1 ? 'Answer' : 'Answers'; ?></span>
+                    <a href="<?php echo $slug; ?>" class="question-title"><?php echo $title; ?></a>
+
+                    <?php if ($topAnswer): ?>
+                        <div class="answer-snippet">
+                            <?php echo $topAnswer; ?>
                         </div>
-                        <div class="stat-item ms-auto">
-                            <a href="<?php echo $slug; ?>" class="btn btn-sm btn-primary py-1 px-3">View Details</a>
-                        </div>
+                        <a href="<?php echo $slug; ?>" class="read-more small">(more)</a>
+                    <?php else: ?>
+                        <div class="text-muted small mb-2">No answers yet.</div>
+                    <?php endif; ?>
+
+                    <div class="card-footer mt-2">
+                        <a href="<?php echo $slug; ?>#answer-form" class="action-item text-decoration-none" title="Answers">
+                            <i class="bi bi-chat-dots"></i>
+                            <span><?php echo $acnt; ?> Answers</span>
+                        </a>
                     </div>
                 </div>
         <?php
