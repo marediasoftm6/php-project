@@ -119,7 +119,8 @@ if (isset($_GET['markRead'])) {
 /**
  * Checks if the current user is verified.
  */
-function is_verified($conn) {
+function is_verified($conn)
+{
     if (!isset($_SESSION['user']['user_id'])) return false;
     $uid = (int)$_SESSION['user']['user_id'];
     $stmt = $conn->prepare("SELECT verified FROM users WHERE id=? LIMIT 1");
@@ -174,7 +175,7 @@ if (isset($_POST['signup'])) {
         $uid = (int)$stmt->insert_id;
         // Do NOT set $_SESSION["user"] here anymore.
         // The user must verify first, then log in manually.
-        
+
         // Email verification token setup
         $ddl = "CREATE TABLE IF NOT EXISTS email_verification_tokens (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -273,7 +274,7 @@ if (isset($_POST['signup'])) {
             </table>
         </body>
         </html>";
-        
+
         $sent = send_email($email, $subject, $body);
         $_SESSION['notice'] = $sent ? "Verification email sent. Please check your inbox." : "Verification email failed to send. Your confirmation code is: <strong>" . $code . "</strong>";
         header("location: /Quesiono/verify-code");
@@ -306,8 +307,8 @@ if (isset($_POST['signup'])) {
                 exit;
             }
             $_SESSION["user"] = [
-                "username" => $row['username'], 
-                "email" => $email, 
+                "username" => $row['username'],
+                "email" => $email,
                 "user_id" => $row['id'],
                 "profile_pic" => $row['profile_pic']
             ];
@@ -421,7 +422,7 @@ if (isset($_POST['signup'])) {
         }
     }
     $links_json = json_encode($links);
-    
+
     $stmt = $conn->prepare("INSERT INTO posts (user_id, category_id, title, slug, subtitle, content, links, template) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("iissssss", $user_id, $category_id, $title, $slug, $subtitle, $content, $links_json, $template);
 
@@ -663,13 +664,13 @@ if (isset($_POST['signup'])) {
     if (!$token || strlen($token) !== 64) {
         exit("Invalid verification link");
     }
-    
+
     // First check if the token exists and is not used
     $sel = $conn->prepare("SELECT id, user_id, expires_at FROM email_verification_tokens WHERE token=? AND used=0 LIMIT 1");
     $sel->bind_param("s", $token);
     $sel->execute();
     $res = $sel->get_result();
-    
+
     if ($res->num_rows === 1) {
         $row = $res->fetch_assoc();
         $tid = (int)$row['id'];
@@ -691,7 +692,7 @@ if (isset($_POST['signup'])) {
             // Clear any existing session to force fresh login after verification
             unset($_SESSION['user']);
             unset($_SESSION['temp_verify_user']);
-            
+
             header("location: /Quesiono/verified");
             exit;
         } else {
@@ -712,7 +713,7 @@ if (isset($_POST['signup'])) {
     $uStmt->bind_param("s", $email);
     $uStmt->execute();
     $uRes = $uStmt->get_result();
-    
+
     if ($uRes->num_rows === 1) {
         $uRow = $uRes->fetch_assoc();
         $uid = (int)$uRow['id'];
@@ -758,5 +759,3 @@ if (isset($_POST['signup'])) {
     header("location: " . $_SERVER['HTTP_REFERER']);
     exit;
 }
-
-

@@ -51,22 +51,22 @@ include_once(__DIR__ . "/../common/db.php");
                               LIMIT 3";
             $trendingRes = $conn->query($trendingQuery);
             if ($trendingRes && $trendingRes->num_rows > 0):
-                while($tq = $trendingRes->fetch_assoc()):
+                while ($tq = $trendingRes->fetch_assoc()):
             ?>
-                <div class="mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
-                    <a href="<?php echo $tq['slug']; ?>" class="text-decoration-none text-dark fw-bold small d-block mb-1 line-clamp-2 hover-primary">
-                        <?php echo htmlspecialchars($tq['title']); ?>
-                    </a>
-                    <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 0.85rem;">
-                        <span class="badge bg-primary-light text-primary border-0 rounded-pill px-2 py-2" style="font-size: 0.85rem;">
-                            <i class="bi bi-chat-text me-1"></i><?php echo $tq['answer_count']; ?> answers
-                        </span>
+                    <div class="mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
+                        <a href="<?php echo $tq['slug']; ?>" class="text-decoration-none text-dark fw-bold small d-block mb-1 line-clamp-2 hover-primary">
+                            <?php echo htmlspecialchars($tq['title']); ?>
+                        </a>
+                        <div class="d-flex align-items-center gap-2 text-muted" style="font-size: 0.85rem;">
+                            <span class="badge bg-primary-light text-primary border-0 rounded-pill px-2 py-2" style="font-size: 0.85rem;">
+                                <i class="bi bi-chat-text me-1"></i><?php echo $tq['answer_count']; ?> answers
+                            </span>
+                        </div>
                     </div>
-                </div>
-            <?php 
+                <?php
                 endwhile;
             else:
-            ?>
+                ?>
                 <p class="text-muted small">No trending questions yet.</p>
             <?php endif; ?>
         </div>
@@ -79,7 +79,7 @@ include_once(__DIR__ . "/../common/db.php");
             <a href="categories" class="text-primary text-decoration-none small fw-bold">View all</a>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <?php 
+            <?php
             $catQuery = "SELECT c.id, c.name, c.slug, COUNT(q.id) as q_count 
                          FROM category c 
                          LEFT JOIN questions q ON q.category_id = c.id 
@@ -88,14 +88,14 @@ include_once(__DIR__ . "/../common/db.php");
                          LIMIT 12";
             $catRes = $conn->query($catQuery);
             if ($catRes):
-                foreach($catRes as $row){
+                foreach ($catRes as $row) {
                     $name = htmlspecialchars(ucfirst($row["name"]), ENT_QUOTES, 'UTF-8');
                     $slug = $row["slug"];
-                    ?>
+            ?>
                     <a href="<?php echo $slug; ?>" class="badge-category text-decoration-none">
                         <?php echo $name; ?>
                     </a>
-                    <?php
+            <?php
                 }
             endif; ?>
         </div>
@@ -114,27 +114,27 @@ include_once(__DIR__ . "/../common/db.php");
                              LIMIT 4";
             $topUsersRes = $conn->query($topUsersQuery);
             if ($topUsersRes && $topUsersRes->num_rows > 0):
-                while($tu = $topUsersRes->fetch_assoc()):
+                while ($tu = $topUsersRes->fetch_assoc()):
                     $username = htmlspecialchars($tu['username']);
                     $initial = strtoupper(substr($username, 0, 1));
                     $profilePic = $tu['profile_pic'];
             ?>
-                <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
-                    <div class="user-avatar-initial user-avatar-md">
-                        <?php if ($profilePic): ?>
-                            <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
-                        <?php else: ?>
-                            <?php echo $initial; ?>
-                        <?php endif; ?>
+                    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
+                        <div class="user-avatar-initial user-avatar-md">
+                            <?php if ($profilePic): ?>
+                                <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="<?php echo $username; ?>">
+                            <?php else: ?>
+                                <?php echo $initial; ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="flex-grow-1">
+                            <a href="<?php echo htmlspecialchars($tu['username']); ?>" class="text-decoration-none text-dark fw-bold d-block">
+                                <?php echo htmlspecialchars(ucfirst($tu['username'])); ?>
+                            </a>
+                            <span class="text-muted" style="font-size: 1rem;"><?php echo $tu['answer_count']; ?> solutions provided</span>
+                        </div>
                     </div>
-                    <div class="flex-grow-1">
-                        <a href="<?php echo htmlspecialchars($tu['username']); ?>" class="text-decoration-none text-dark fw-bold d-block">
-                            <?php echo htmlspecialchars(ucfirst($tu['username'])); ?>
-                        </a>
-                        <span class="text-muted" style="font-size: 1rem;"><?php echo $tu['answer_count']; ?> solutions provided</span>
-                    </div>
-                </div>
-            <?php 
+            <?php
                 endwhile;
             endif; ?>
         </div>
@@ -148,28 +148,28 @@ include_once(__DIR__ . "/../common/db.php");
             $postQuery = "SELECT p.id, p.title, p.slug, p.template, p.created_at FROM posts p ORDER BY p.id DESC LIMIT 3";
             $postRes = $conn->query($postQuery);
             if ($postRes && $postRes->num_rows > 0):
-                while($p = $postRes->fetch_assoc()):
+                while ($p = $postRes->fetch_assoc()):
                     $icon = 'bi-journal-text';
-                    if($p['template'] == 'guide') $icon = 'bi-list-ol';
-                    else if($p['template'] == 'technical') $icon = 'bi-code-square';
-                    else if($p['template'] == 'story') $icon = 'bi-chat-quote';
+                    if ($p['template'] == 'guide') $icon = 'bi-list-ol';
+                    else if ($p['template'] == 'technical') $icon = 'bi-code-square';
+                    else if ($p['template'] == 'story') $icon = 'bi-chat-quote';
             ?>
-                <div class="mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
-                    <div class="d-flex gap-3 align-items-start">
-                        <div class="bg-primary-light text-primary rounded p-2" style="min-width: 38px; text-align: center;">
-                            <i class="bi <?php echo $icon; ?> fs-5"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <a href="<?php echo $p['slug']; ?>" class="text-decoration-none text-dark fw-bold small d-block mb-1 line-clamp-2 hover-primary">
-                                <?php echo htmlspecialchars($p['title']); ?>
-                            </a>
-                            <span class="text-muted" style="font-size: 0.7rem;">
-                                <i class="bi bi-calendar3 me-1"></i><?php echo date('M d, Y', strtotime($p['created_at'])); ?>
-                            </span>
+                    <div class="mb-3 pb-3 border-bottom border-light-subtle last-child-border-0">
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="bg-primary-light text-primary rounded p-2" style="min-width: 38px; text-align: center;">
+                                <i class="bi <?php echo $icon; ?> fs-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <a href="<?php echo $p['slug']; ?>" class="text-decoration-none text-dark fw-bold small d-block mb-1 line-clamp-2 hover-primary">
+                                    <?php echo htmlspecialchars($p['title']); ?>
+                                </a>
+                                <span class="text-muted" style="font-size: 0.7rem;">
+                                    <i class="bi bi-calendar3 me-1"></i><?php echo date('M d, Y', strtotime($p['created_at'])); ?>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            <?php 
+            <?php
                 endwhile;
             endif; ?>
         </div>
@@ -188,15 +188,17 @@ include_once(__DIR__ . "/../common/db.php");
 </div>
 
 <style>
-.hover-primary:hover {
-    color: var(--primary) !important;
-}
-.btn-primary-light {
-    background-color: rgba(var(--primary-rgb), 0.1);
-    border: none;
-}
-.btn-primary-light:hover {
-    background-color: rgba(var(--primary-rgb), 0.2);
-    color: var(--primary);
-}
+    .hover-primary:hover {
+        color: var(--primary) !important;
+    }
+
+    .btn-primary-light {
+        background-color: rgba(var(--primary-rgb), 0.1);
+        border: none;
+    }
+
+    .btn-primary-light:hover {
+        background-color: rgba(var(--primary-rgb), 0.2);
+        color: var(--primary);
+    }
 </style>

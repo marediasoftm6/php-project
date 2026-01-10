@@ -18,10 +18,10 @@
                 <h2 class="display-6 fw-bold text-dark">Ask a Public Question</h2>
                 <p class="text-muted lead">Be specific and imagine you’re asking a question to another person.</p>
             </div>
-            
+
             <form method="post" action="./server/requests.php">
                 <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token'] ?>">
-                
+
                 <div class="row g-4">
                     <div class="col-12">
                         <div class="form-group mb-4">
@@ -46,7 +46,9 @@
                             <?php if (is_verified_user($conn)): ?>
                                 <?php include("category.php"); ?>
                             <?php else: ?>
-                                <select class="form-control" disabled><option>Select a category</option></select>
+                                <select class="form-control" disabled>
+                                    <option>Select a category</option>
+                                </select>
                             <?php endif; ?>
                         </div>
                     </div>

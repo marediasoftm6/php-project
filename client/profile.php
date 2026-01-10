@@ -22,7 +22,7 @@
     } else {
         // Check and award badges on view
         check_and_award_badges($conn, $uid);
-        
+
         $stmt = $conn->prepare("SELECT username, email, gender, birthdate, created_at, profile_pic FROM users WHERE id=? LIMIT 1");
         $stmt->bind_param("i", $uid);
         $stmt->execute();
@@ -41,7 +41,7 @@
             $profilePic = $row['profile_pic'];
             $joinedDate = date('M Y', strtotime($createdAt));
             $joinedYear = date('Y', strtotime($createdAt));
-            
+
             $initial = strtoupper(substr($username, 0, 1));
 
             // Stats
@@ -49,7 +49,7 @@
             $qcntStmt->bind_param("i", $uid);
             $qcntStmt->execute();
             $qcnt = $qcntStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
-            
+
             $acntStmt = $conn->prepare("SELECT COUNT(*) as cnt FROM answers WHERE user_id=?");
             $acntStmt->bind_param("i", $uid);
             $acntStmt->execute();
@@ -73,20 +73,22 @@
             $followersStmt->bind_param("i", $uid);
             $followersStmt->execute();
             $followersCount = $followersStmt->get_result()->fetch_assoc()['cnt'] ?? 0;
-            ?>
+    ?>
 
             <div class="row">
                 <!-- Main Profile Content -->
                 <div class="mt-4 col-12 col-lg-8">
                     <?php if (isset($_SESSION['error'])): ?>
                         <div class="alert alert-danger border-0 small mb-4">
-                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                            <?php echo $_SESSION['error'];
+                            unset($_SESSION['error']); ?>
                         </div>
                     <?php endif; ?>
 
                     <?php if (isset($_SESSION['notice'])): ?>
                         <div class="alert alert-info border-0 small mb-4">
-                            <?php echo $_SESSION['notice']; unset($_SESSION['notice']); ?>
+                            <?php echo $_SESSION['notice'];
+                            unset($_SESSION['notice']); ?>
                         </div>
                     <?php endif; ?>
 
@@ -110,7 +112,7 @@
                                 <?php else: ?>
                                     <div class="profile-avatar-xl"><?php echo $initial; ?></div>
                                 <?php endif; ?>
-                                
+
                                 <?php if ($isOwnProfile): ?>
                                     <form id="profile-pic-form" action="./server/requests.php" method="POST" enctype="multipart/form-data" class="d-none">
                                         <input type="file" name="profile_pic" id="profile-pic-input" accept="image/*" onchange="document.getElementById('profile-pic-form').submit()">
@@ -137,7 +139,7 @@
                                         </div>
                                     <?php endif; ?>
                                 </div>
-                                
+
                                 <div class="profile-stats-row">
                                     <span class="stat-item"><span class="stat-value" id="followersCount"><?php echo $followersCount; ?></span> Followers</span>
                                     <span class="stat-item"><span class="stat-value"><?php echo $qcnt; ?></span> Questions</span>
@@ -199,7 +201,7 @@
                                     $ansAuthor = htmlspecialchars($ans['author_name'], ENT_QUOTES, 'UTF-8');
                                     $ansDate = date('M Y', strtotime($ans['created_at']));
                                     $displayInitial = strtoupper(substr($ansAuthor, 0, 1));
-                                    ?>
+                            ?>
                                     <div class="qa-card-reference">
                                         <div class="card-header">
                                             <div class="user-avatar">
@@ -225,15 +227,8 @@
                                             <?php echo $ansContent; ?>
                                         </div>
                                         <a href="<?php echo $qSlug; ?>" class="read-more small">(more)</a>
-
-                                        <div class="card-footer mt-2">
-                                            <a href="<?php echo $qSlug; ?>#answer-form" class="action-item text-decoration-none" title="Answers">
-                                                <i class="bi bi-chat-dots"></i>
-                                                <span><?php echo $ans['acnt']; ?> Answers</span>
-                                            </a>
-                                        </div>
                                     </div>
-                                    <?php
+                            <?php
                                 }
                             }
                             ?>
@@ -263,11 +258,11 @@
                                     $answererName = $q['answerer_username'] ? htmlspecialchars($q['answerer_username'], ENT_QUOTES, 'UTF-8') : null;
                                     $answerDate = $q['answer_date'] ?? $q['created_at'];
                                     $timeAgo = date('M Y', strtotime($answerDate));
-                                    
+
                                     $displayUser = $answererName ?? htmlspecialchars($q['username'], ENT_QUOTES, 'UTF-8');
                                     $displayInitial = strtoupper(substr($displayUser, 0, 1));
                                     $displayProfilePic = $answererName ? $q['answerer_pic'] : $q['author_pic'];
-                                    ?>
+                            ?>
                                     <div class="qa-card-reference">
                                         <div class="card-header">
                                             <div class="user-avatar">
@@ -317,7 +312,7 @@
                                             </a>
                                         </div>
                                     </div>
-                                    <?php
+                            <?php
                                 }
                             }
                             ?>
@@ -335,10 +330,10 @@
                             } else {
                                 foreach ($pRes as $p) {
                                     $templateIcon = 'bi-journal-text';
-                                    if($p['template'] == 'guide') $templateIcon = 'bi-list-ol';
-                                    else if($p['template'] == 'technical') $templateIcon = 'bi-code-square';
-                                    else if($p['template'] == 'story') $templateIcon = 'bi-chat-quote';
-                                    ?>
+                                    if ($p['template'] == 'guide') $templateIcon = 'bi-list-ol';
+                                    else if ($p['template'] == 'technical') $templateIcon = 'bi-code-square';
+                                    else if ($p['template'] == 'story') $templateIcon = 'bi-chat-quote';
+                            ?>
                                     <div class="answer-card mb-3">
                                         <div class="d-flex align-items-center mb-2">
                                             <i class="bi <?php echo $templateIcon; ?> text-primary me-2"></i>
@@ -355,7 +350,7 @@
                                             <?php echo htmlspecialchars(substr(strip_tags($p['content']), 0, 150)) . (strlen(strip_tags($p['content'])) > 150 ? '...' : ''); ?>
                                         </p>
                                     </div>
-                                    <?php
+                            <?php
                                 }
                             }
                             ?>
@@ -399,12 +394,12 @@
                                 echo "<span class='text-muted small'>No badges earned yet.</span>";
                             } else {
                                 while ($badge = $badgeRes->fetch_assoc()) {
-                                    ?>
+                            ?>
                                     <span class="badge bg-light text-dark border p-2" title="<?php echo htmlspecialchars($badge['description']); ?>">
-                                        <i class="bi <?php echo htmlspecialchars($badge['icon']); ?> text-primary"></i> 
+                                        <i class="bi <?php echo htmlspecialchars($badge['icon']); ?> text-primary"></i>
                                         <?php echo htmlspecialchars($badge['name']); ?>
                                     </span>
-                                    <?php
+                            <?php
                                 }
                             }
                             ?>
@@ -414,55 +409,55 @@
             </div>
 
             <script>
-            function switchTab(tabName) {
-                // Remove active class from all tabs and contents
-                document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Add active class to clicked tab and corresponding content
-                if (event && event.currentTarget) {
-                    event.currentTarget.classList.add('active');
-                }
-                document.getElementById(tabName + '-tab').classList.add('active');
-            }
+                function switchTab(tabName) {
+                    // Remove active class from all tabs and contents
+                    document.querySelectorAll('.profile-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
-            function toggleFollow(followingId) {
-            const btn = document.getElementById('followBtn');
-            const countSpan = document.getElementById('followersCount');
-            
-            // Disable button during request to prevent multiple clicks
-            btn.disabled = true;
-            btn.style.transform = 'scale(0.95)';
-            
-            fetch('./server/requests.php?toggleFollow=' + followingId)
-                .then(response => response.json())
-                .then(data => {
-                    btn.disabled = false;
-                    btn.style.transform = 'scale(1)';
-                    
-                    if (data.success) {
-                        if (data.status === 'followed') {
-                            btn.innerText = 'Following';
-                            btn.classList.remove('action-btn-primary');
-                            btn.classList.add('btn-following');
-                            countSpan.innerText = parseInt(countSpan.innerText) + 1;
-                        } else {
-                            btn.innerText = 'Follow';
-                            btn.classList.remove('btn-following');
-                            btn.classList.add('action-btn-primary');
-                            countSpan.innerText = parseInt(countSpan.innerText) - 1;
-                        }
-                    } else if (data.error === 'not_logged_in') {
-                        window.location.href = 'login';
+                    // Add active class to clicked tab and corresponding content
+                    if (event && event.currentTarget) {
+                        event.currentTarget.classList.add('active');
                     }
-                })
-                .catch(err => {
-                    btn.disabled = false;
-                    btn.style.transform = 'scale(1)';
-                    console.error('Error toggling follow:', err);
-                });
-        }
+                    document.getElementById(tabName + '-tab').classList.add('active');
+                }
+
+                function toggleFollow(followingId) {
+                    const btn = document.getElementById('followBtn');
+                    const countSpan = document.getElementById('followersCount');
+
+                    // Disable button during request to prevent multiple clicks
+                    btn.disabled = true;
+                    btn.style.transform = 'scale(0.95)';
+
+                    fetch('./server/requests.php?toggleFollow=' + followingId)
+                        .then(response => response.json())
+                        .then(data => {
+                            btn.disabled = false;
+                            btn.style.transform = 'scale(1)';
+
+                            if (data.success) {
+                                if (data.status === 'followed') {
+                                    btn.innerText = 'Following';
+                                    btn.classList.remove('action-btn-primary');
+                                    btn.classList.add('btn-following');
+                                    countSpan.innerText = parseInt(countSpan.innerText) + 1;
+                                } else {
+                                    btn.innerText = 'Follow';
+                                    btn.classList.remove('btn-following');
+                                    btn.classList.add('action-btn-primary');
+                                    countSpan.innerText = parseInt(countSpan.innerText) - 1;
+                                }
+                            } else if (data.error === 'not_logged_in') {
+                                window.location.href = 'login';
+                            }
+                        })
+                        .catch(err => {
+                            btn.disabled = false;
+                            btn.style.transform = 'scale(1)';
+                            console.error('Error toggling follow:', err);
+                        });
+                }
             </script>
-        <?php }
+    <?php }
     } ?>
 </div>

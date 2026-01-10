@@ -51,7 +51,7 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
                 ");
                 while ($badge = $topBadges->fetch_assoc()) {
                     $percentage = $uCount > 0 ? round(($badge['count'] / $uCount) * 100, 1) : 0;
-                    ?>
+                ?>
                     <div class="mb-4">
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <div class="d-flex align-items-center">
@@ -72,7 +72,7 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
                             <div class="progress-bar rounded-pill" role="progressbar" style="width: <?php echo $percentage; ?>%;" aria-valuenow="<?php echo $percentage; ?>" aria-valuemin="0" aria-valuemax="100"></div>
                         </div>
                     </div>
-                    <?php
+                <?php
                 }
                 ?>
             </div>
@@ -102,7 +102,7 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
                         $username = htmlspecialchars($award['username']);
                         $profilePic = $award['profile_pic'];
                         $initial = strtoupper(substr($username, 0, 1));
-                        ?>
+                ?>
                         <div class="d-flex align-items-center p-3 mb-3 border rounded-4 hover-bg-light transition-all">
                             <div class="user-avatar-initial user-avatar-md me-3">
                                 <?php if ($profilePic): ?>
@@ -124,7 +124,7 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
                                 <i class="bi bi-check-circle-fill text-success"></i>
                             </div>
                         </div>
-                        <?php
+                <?php
                     }
                 } else {
                     echo '<div class="text-center py-5 text-muted">
@@ -139,14 +139,15 @@ $bCount = $conn->query("SELECT COUNT(*) as count FROM user_badges")->fetch_assoc
 </div>
 
 <style>
-@media (min-width: 768px) {
-    .border-end-md {
-        border-right: 1px solid var(--bs-border-color) !important;
+    @media (min-width: 768px) {
+        .border-end-md {
+            border-right: 1px solid var(--bs-border-color) !important;
+        }
     }
-}
-@media (max-width: 767.98px) {
-    .border-end-md {
-        border-right: none !important;
+
+    @media (max-width: 767.98px) {
+        .border-end-md {
+            border-right: none !important;
+        }
     }
-}
 </style>
