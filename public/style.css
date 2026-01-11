@@ -85,6 +85,7 @@ body {
   border-radius: 999px !important;
   transition: all 0.2s ease !important;
   box-shadow: var(--shadow);
+  white-space: nowrap;
 }
 .user-toggle:hover {
   background-color: var(--bg) !important;
@@ -327,6 +328,17 @@ body {
   overflow: hidden;
 }
 
+.user-avatar-initial {
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient);
+  color: var(--white);
+  flex-shrink: 0;
+}
+
 .user-avatar-md {
   width: 44px;
   height: 44px;
@@ -382,7 +394,7 @@ body {
 .user-avatar-small img {
   width: 100% !important;
   height: 100% !important;
-  object-fit: contain !important;
+  object-fit: cover !important;
   border-radius: 50% !important;
 }
 .row-actions-toggle {
@@ -1396,9 +1408,260 @@ textarea.form-control {
     gap: 1.25rem;
   }
   .btn-lg {
-    padding: 0.5rem 0.8rem !important;
-    font-size: 0.8rem !important;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.9375rem;
   }
+}
+
+/* Rich Text Editor (Quill) Styles */
+.rich-editor-wrapper {
+  border: 1px solid var(--border);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  background: var(--white);
+}
+
+.rich-editor-wrapper:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.1);
+}
+
+.ql-toolbar.ql-snow {
+  border: none !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 8px 12px !important;
+  background: #fcfcfd;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  margin-right: 12px !important;
+  padding-right: 12px !important;
+  border-right: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.ql-toolbar.ql-snow .ql-formats:last-child {
+  border-right: none;
+  margin-right: 0 !important;
+  padding-right: 0 !important;
+}
+
+.ql-container.ql-snow {
+  border: none !important;
+  font-family: inherit !important;
+  font-size: 1rem !important;
+}
+
+.ql-editor {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  color: var(--text);
+  padding: 1.25rem;
+  min-height: 200px;
+}
+
+/* In detail views, we often want to control padding externally */
+.ql-editor.p-0 {
+  padding: 0 !important;
+}
+
+/* Customizing Quill Toolbar Buttons */
+.ql-snow.ql-toolbar button, 
+.ql-snow .ql-toolbar button {
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.ql-snow.ql-toolbar button:hover,
+.ql-snow .ql-toolbar button:hover,
+.ql-snow.ql-toolbar button.ql-active,
+.ql-snow .ql-toolbar button.ql-active {
+  color: var(--primary) !important;
+  background-color: rgba(var(--primary-rgb), 0.08);
+}
+
+.ql-snow.ql-toolbar button:hover .ql-stroke,
+.ql-snow .ql-toolbar button:hover .ql-stroke,
+.ql-snow.ql-toolbar button.ql-active .ql-stroke,
+.ql-snow .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--primary) !important;
+}
+
+.ql-snow.ql-toolbar button:hover .ql-fill,
+.ql-snow .ql-toolbar button:hover .ql-fill,
+.ql-snow.ql-toolbar button.ql-active .ql-fill,
+.ql-snow .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--primary) !important;
+}
+
+/* Quill Dropdowns */
+.ql-snow .ql-picker {
+  color: var(--text-muted) !important;
+  font-weight: 500 !important;
+  border-radius: 6px;
+  height: 32px;
+}
+
+.ql-snow .ql-picker-label {
+  padding-left: 8px !important;
+  padding-right: 20px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.ql-snow .ql-picker-label:hover {
+  color: var(--primary) !important;
+  background-color: rgba(var(--primary-rgb), 0.08);
+}
+
+.ql-snow .ql-picker.ql-expanded .ql-picker-label {
+  border-color: var(--border) !important;
+  background-color: var(--white);
+}
+
+.ql-snow .ql-picker-options {
+  border-radius: 8px !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-lg) !important;
+  padding: 8px !important;
+  margin-top: 4px;
+}
+
+/* Responsive adjustments for toolbar */
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow .ql-formats {
+    border-right: none;
+    margin-right: 8px !important;
+    padding-right: 0 !important;
+    margin-bottom: 4px;
+  }
+}
+
+@media (max-width: 576px) {
+  .ql-toolbar.ql-snow {
+    padding: 6px 8px !important;
+  }
+  
+  .ql-formats {
+    margin-right: 4px !important;
+    margin-bottom: 4px !important;
+  }
+  
+  .ql-editor {
+    padding: 1rem !important;
+  }
+
+  .ql-snow.ql-toolbar button, 
+  .ql-snow .ql-toolbar button {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+  }
+
+  .ql-snow .ql-picker {
+    height: 28px;
+  }
+}
+
+.ql-editor h1, .ql-editor h2, .ql-editor h3 {
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
+  color: var(--text);
+}
+
+.ql-editor p {
+  margin-bottom: 1rem;
+}
+
+.ql-editor p:first-child {
+  margin-top: 0 !important;
+}
+
+.ql-editor blockquote {
+  border-left: 4px solid var(--primary);
+  padding-left: 1.5rem;
+  margin: 1.5rem 0;
+  font-style: italic;
+  color: var(--text-muted);
+}
+
+.ql-editor pre.ql-syntax {
+  background-color: #23241f;
+  color: #f8f8f2;
+  border-radius: 8px;
+  padding: 1rem;
+  overflow: auto;
+  margin: 1.5rem 0;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.ql-editor img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.ql-editor .ql-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.ql-editor table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+}
+
+.ql-editor table th, .ql-editor table td {
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  text-align: left;
+}
+
+.ql-editor table th {
+  background-color: rgba(var(--primary-rgb), 0.05);
+  font-weight: 700;
+}
+
+/* Technical Template Specific Code Styles */
+.preview-technical .ql-editor pre.ql-syntax {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Article Template Lead Paragraph */
+.preview-article .ql-editor p:first-child {
+  font-size: 1.2rem;
+  color: #444;
+}
+
+/* Dark mode support for rich text */
+[data-theme="dark"] .ql-editor {
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .ql-editor h1, 
+[data-theme="dark"] .ql-editor h2, 
+[data-theme="dark"] .ql-editor h3 {
+  color: #f8fafc;
+}
+
+[data-theme="dark"] .ql-editor table th, 
+[data-theme="dark"] .ql-editor table td {
+  border-color: rgba(255, 255, 255, 0.1);
 }
 @media (min-width: 992px) {
   .navbar-expand-lg .navbar-collapse {

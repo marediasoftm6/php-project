@@ -167,7 +167,15 @@ include_once(__DIR__ . "/../common/db.php");
                 </svg>
               <?php endif; ?>
             </div>
-            <span class="d-none d-sm-inline"><?php echo (isset($_SESSION['user']['username']) && is_verified_user($conn)) ? htmlspecialchars($_SESSION['user']['username']) : 'Account'; ?></span>
+            <span class="d-none d-sm-inline"><?php 
+              if (isset($_SESSION['user']['username']) && is_verified_user($conn)) {
+                $fullName = $_SESSION['user']['username'];
+                $firstName = explode(' ', trim($fullName))[0];
+                echo htmlspecialchars($firstName);
+              } else {
+                echo 'Account';
+              }
+            ?></span>
           </button>
           <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0 mt-2">
             <?php if (isset($_SESSION['user']['username']) && is_verified_user($conn)) { ?>

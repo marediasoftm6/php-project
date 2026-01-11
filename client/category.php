@@ -7,7 +7,8 @@
     foreach($result as $row){
         $name = $row["name"];
         $id = $row["id"];
-        echo "<option value=$id>$name</option>";
+        $selected = (isset($_GET['pre_select_category']) && $_GET['pre_select_category'] == $id) ? 'selected' : '';
+        echo "<option value=$id $selected>$name</option>";
     } 
     ?>
 </select>

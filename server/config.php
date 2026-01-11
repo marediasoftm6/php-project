@@ -1,4 +1,9 @@
 <?php
+// Include composer autoloader
+if (file_exists(__DIR__ . '/../vendor/autoload.php')) {
+    require_once __DIR__ . '/../vendor/autoload.php';
+}
+
 // Authentication configuration
 // Set to false to store passwords in plain text (not recommended)
 define('AUTH_HASH_ENABLED', false);
@@ -14,28 +19,34 @@ if (!defined('SMTP_USERNAME')) define('SMTP_USERNAME', 'muhammadshahzaibkhan2k20
 if (!defined('SMTP_PASSWORD')) define('SMTP_PASSWORD', 'hhnpbjoihuqqdlhq');
 if (!defined('SMTP_SECURE')) define('SMTP_SECURE', 'tls'); // 'tls' or 'ssl'
 
+/**
+ * Sanitizes HTML content using HTMLPurifier.
+ * This is used for rich text content from Quill editor.
+ */
+function sanitize_html($html) {
+    if (!class_exists('HTMLPurifier_Config')) {
+        // Fallback if HTMLPurifier is not available
+        return strip_tags($html, '<p><br><strong><em><u><s><h1><h2><h3><h4><h5><h6><blockquote><pre><ol><ul><li><sub><sup><span><a><img><video><div><table><thead><tbody><tr><th><td>');
+    }
+    
+    $config = HTMLPurifier_Config::createDefault();
+    // Allow Quill specific attributes and tags
+    $config->set('HTML.SafeIframe', true);
+    $config->set('URI.SafeIframeRegexp', '%^(https?:)?//(www\.youtube(?:-nocookie)?\.com/embed/|player\.vimeo\.com/video/)%');
+    $config->set('Attr.AllowedFrameTargets', array('_blank'));
+    
+    $purifier = new HTMLPurifier($config);
+    return $purifier->purify($html);
+}
+
 function send_email($to, $subject, $html)
 {
     $onWindows = (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN');
     $useSMTP = (MAIL_DRIVER === 'smtp' && SMTP_HOST !== '');
     $useDisplay = (MAIL_DRIVER === 'display') || (MAIL_DRIVER === 'smtp' && SMTP_HOST === '') || (MAIL_DRIVER === 'mail' && $onWindows);
 
-    // Try PHPMailer if available
-    $phpmailerAvailable = false;
-    $paths = [
-        __DIR__ . '/../vendor/phpmailer/phpmailer/src',
-    ];
-    foreach ($paths as $vendorBase) {
-        if (is_file($vendorBase . '/PHPMailer.php') && is_file($vendorBase . '/SMTP.php') && is_file($vendorBase . '/Exception.php')) {
-            require_once $vendorBase . '/Exception.php';
-            require_once $vendorBase . '/PHPMailer.php';
-            require_once $vendorBase . '/SMTP.php';
-            $phpmailerAvailable = class_exists('\\PHPMailer\\PHPMailer\\PHPMailer');
-            if ($phpmailerAvailable) {
-                break;
-            }
-        }
-    }
+    // PHPMailer should be available via autoloader
+    $phpmailerAvailable = class_exists('\\PHPMailer\\PHPMailer\\PHPMailer');
 
     if ($useDisplay) {
         $_SESSION['last_email_preview'] = ['to' => $to, 'subject' => $subject, 'html' => $html];

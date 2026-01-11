@@ -6,7 +6,7 @@
                     <i class="bi bi-shield-check" style="font-size: 2.5rem;"></i>
                 </div>
                 <h2 class="fw-bold" style="color: var(--text);">Enter Verification Code</h2>
-                <p class="text-muted">We've sent a 6-digit code to your email address.</p>
+                <p class="text-muted">Enter the 6-digit code sent to your email address to verify your account.</p>
             </div>
 
             <?php if (isset($_SESSION['error'])): ?>
@@ -47,6 +47,11 @@
 
             <div class="text-center mt-4">
                 <p class="text-muted small">Didn't receive the code? 
+                    <form action="./server/requests.php" method="post" class="d-inline">
+                        <input type="hidden" name="csrf" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <button type="submit" name="resendCode" class="btn btn-link p-0 m-0 align-baseline text-primary text-decoration-none fw-bold">Resend Code</button>
+                    </form>
+                    <span class="mx-1">or</span>
                     <a href="signup" class="text-primary text-decoration-none fw-bold">Try Signing up again</a>
                 </p>
             </div>

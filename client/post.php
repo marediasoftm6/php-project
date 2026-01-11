@@ -5,6 +5,10 @@ if (!isset($_SESSION['user']['username'])) {
 }
 ?>
 
+<!-- Quill Editor Dependencies -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
 <div class="post-page-container mb-5">
     <div class="row mb-4">
         <div class="col-12">
@@ -89,8 +93,11 @@ if (!isset($_SESSION['user']['username'])) {
 
                     <div class="mb-4">
                         <label class="form-label fw-bold" for="postContent">Content</label>
-                        <p class="small text-muted mb-2">Use double newlines for paragraphs. You can use simple HTML like &lt;b&gt;, &lt;i&gt;, or &lt;a&gt; for links.</p>
-                        <textarea id="postContent" class="form-control border-0 bg-light rounded-3" name="content" rows="12" placeholder="Write your amazing content here..." required <?php echo !is_verified_user($conn) ? 'disabled' : ''; ?>></textarea>
+                        <p class="small text-muted mb-2">Write your post with rich formatting, lists, and links.</p>
+                        <div class="rich-editor-wrapper bg-light rounded-3 overflow-hidden">
+                            <div id="editor-container" style="height: 400px; border: none !important;"></div>
+                        </div>
+                        <input type="hidden" name="content" id="postContent">
                     </div>
 
                     <div class="mb-4">
@@ -179,9 +186,27 @@ if (!isset($_SESSION['user']['username'])) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Quill Editor
+    const quill = new Quill('#editor-container', {
+        modules: {
+            toolbar: [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['link', 'blockquote', 'code-block'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'script': 'sub'}, { 'script': 'super' }],
+                [{ 'align': [] }],
+                ['image', 'video', 'table'],
+                ['clean']
+            ]
+        },
+        placeholder: 'Write your amazing content here...',
+        theme: 'snow'
+    });
+
     const postTitle = document.getElementById('postTitle');
     const postSubtitle = document.getElementById('postSubtitle');
-    const postContent = document.getElementById('postContent');
+    const postContentHidden = document.getElementById('postContent');
     const previewArea = document.getElementById('previewArea');
     const templateCards = document.querySelectorAll('.template-card');
     const selectedTemplateInput = document.getElementById('selectedTemplate');
@@ -191,72 +216,77 @@ document.addEventListener('DOMContentLoaded', function() {
     function updatePreview() {
         const title = postTitle.value || 'Your Title Here';
         const subtitle = postSubtitle.value || '';
-        const content = postContent.value || 'Start writing your content...';
+        const content = quill.root.innerHTML || 'Start writing your content...';
         const template = selectedTemplateInput.value;
+
+        // Sync Quill content to hidden input
+        postContentHidden.value = content;
 
         // Get links
         let linksHtml = '';
         const linkTexts = document.querySelectorAll('.post-link-text');
         const linkUrls = document.querySelectorAll('.post-link-url');
         
-        linkTexts.forEach((text, index) => {
-            const url = linkUrls[index].value;
-            if (text.value && url) {
-                linksHtml += `<a href="${url}" target="_blank" class="badge rounded-pill bg-primary me-2 mb-2 text-white"><i class="bi bi-link-45deg me-1"></i>${text.value}</a>`;
+        linksHtml += '<div class="preview-links d-flex flex-wrap gap-2 mt-4">';
+        linkTexts.forEach((el, i) => {
+            const text = el.value;
+            const url = linkUrls[i].value;
+            if (text && url) {
+                linksHtml += `<a href="${url}" target="_blank" class="badge bg-primary-light text-primary border-0 rounded-pill">${text}</a>`;
             }
         });
+        linksHtml += '</div>';
 
-        const formattedContent = content.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-
-        let previewHtml = '';
-        switch(template) {
-            case 'article':
-                previewHtml = `
-                    <div class="preview-article">
-                        <h1 class="preview-title">${title}</h1>
-                        ${subtitle ? `<p class="preview-subtitle">${subtitle}</p>` : ''}
-                        <div class="preview-content"><p>${formattedContent}</p></div>
-                        <div class="preview-links mt-4 d-flex flex-wrap">${linksHtml}</div>
-                    </div>`;
-                break;
-            case 'guide':
-                previewHtml = `
-                    <div class="preview-guide">
-                        <h1 class="preview-title">${title}</h1>
-                        ${subtitle ? `<div class="preview-subtitle fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i>${subtitle}</div>` : ''}
-                        <div class="preview-content"><p>${formattedContent}</p></div>
-                        <div class="preview-links mt-4 d-flex flex-wrap">${linksHtml}</div>
-                    </div>`;
-                break;
-            case 'technical':
-                previewHtml = `
-                    <div class="preview-technical">
-                        <h1 class="preview-title">> ${title}</h1>
-                        ${subtitle ? `<div class="mb-3 text-muted fw-bold small uppercase">${subtitle}</div>` : ''}
-                        <div class="preview-content">${formattedContent}</div>
-                        <div class="preview-links mt-4 d-flex flex-wrap">${linksHtml}</div>
-                    </div>`;
-                break;
-            case 'story':
-                previewHtml = `
-                    <div class="preview-story">
-                        <h1 class="preview-title">${title}</h1>
-                        <div class="preview-content">
-                            ${subtitle ? `<p class="mb-5 text-primary fw-bold">${subtitle}</p>` : ''}
-                            <p>${formattedContent}</p>
-                        </div>
-                        <div class="preview-links mt-5 d-flex flex-wrap">${linksHtml}</div>
-                    </div>`;
-                break;
+        let templateHtml = '';
+        if (template === 'article') {
+            templateHtml = `
+                <div class="preview-article">
+                    <h1 class="preview-title">${title}</h1>
+                    ${subtitle ? `<p class="preview-subtitle">${subtitle}</p>` : ''}
+                    <div class="preview-content ql-editor p-0 mt-4">${content}</div>
+                    ${linksHtml}
+                </div>
+            `;
+        } else if (template === 'guide') {
+            templateHtml = `
+                <div class="preview-guide">
+                    <h1 class="preview-title text-center">${title}</h1>
+                    ${subtitle ? `<div class="preview-subtitle text-center mb-4">${subtitle}</div>` : ''}
+                    <div class="preview-content ql-editor p-0">${content}</div>
+                    ${linksHtml}
+                </div>
+            `;
+        } else if (template === 'technical') {
+            templateHtml = `
+                <div class="preview-technical">
+                    <h1 class="preview-title">> ${title}</h1>
+                    <div class="preview-content">
+                        ${subtitle ? `<div class="mb-3 fw-bold">${subtitle}</div>` : ''}
+                        <div class="ql-editor p-0">${content}</div>
+                    </div>
+                    ${linksHtml}
+                </div>
+            `;
+        } else if (template === 'story') {
+            templateHtml = `
+                <div class="preview-story">
+                    <h1 class="preview-title">${title}</h1>
+                    <div class="preview-content">
+                        ${subtitle ? `<p class="lead mb-4">${subtitle}</p>` : ''}
+                        <div class="ql-editor p-0">${content}</div>
+                    </div>
+                    ${linksHtml}
+                </div>
+            `;
         }
 
-        previewArea.innerHTML = previewHtml;
+        previewArea.innerHTML = templateHtml;
     }
 
-    // Event Listeners
+    // Update on changes
     postTitle.addEventListener('input', updatePreview);
     postSubtitle.addEventListener('input', updatePreview);
-    postContent.addEventListener('input', updatePreview);
+    quill.on('text-change', updatePreview);
 
     templateCards.forEach(card => {
         card.addEventListener('click', function() {
@@ -291,7 +321,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('input', updatePreview);
     });
 
-    // Initial preview update if any values exist
-    if(postTitle.value || postContent.value) updatePreview();
+    // Initial preview update
+    updatePreview();
 });
 </script>

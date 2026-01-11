@@ -4,6 +4,102 @@ include("../common/db.php");
 include("../common/badge_helper.php");
 include("config.php");
 
+/**
+ * Helper to generate and send a verification email.
+ */
+function send_verification_email($conn, $uid, $email, $username) {
+    // Ensure table and column exist
+    $ddl = "CREATE TABLE IF NOT EXISTS email_verification_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        token CHAR(64) NOT NULL,
+        code CHAR(6) NOT NULL,
+        expires_at DATETIME NOT NULL,
+        used TINYINT(1) NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_token (token),
+        INDEX idx_code (code),
+        INDEX idx_user_expires (user_id, expires_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+    $conn->query($ddl);
+
+    $res = $conn->query("SHOW COLUMNS FROM email_verification_tokens LIKE 'code'");
+    if ($res->num_rows === 0) {
+        $conn->query("ALTER TABLE email_verification_tokens ADD COLUMN code CHAR(6) NOT NULL AFTER token");
+    }
+
+    $token = generate_token(64);
+    $code = sprintf("%06d", mt_rand(1, 999999));
+    $expires = date('Y-m-d H:i:s', time() + 60 * 60); // 1 hour
+    
+    $ins = $conn->prepare("INSERT INTO email_verification_tokens (user_id, token, code, expires_at) VALUES (?, ?, ?, ?)");
+    $ins->bind_param("isss", $uid, $token, $code, $expires);
+    $ins->execute();
+
+    $verifyLink = base_url() . "/server/requests.php?verifyEmail=" . urlencode($token);
+    $subject = "Verify your email for Quesiono";
+    $body = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <title>Verify your email</title>
+    </head>
+    <body style='margin: 0; padding: 0; background-color: #f4f7f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'>
+        <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: #f4f7f9; padding: 40px 0;'>
+            <tr>
+                <td align='center'>
+                    <table border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
+                        <tr>
+                            <td align='center' style='padding: 40px 40px 20px 40px;'>
+                                <h1 style='margin: 0; color: #0d6efd; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;'>Quesiono</h1>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 0 40px 20px 40px; text-align: center;'>
+                                <h2 style='margin: 0; color: #1a1a1a; font-size: 24px; font-weight: 700; line-height: 1.3;'>Welcome to our community!</h2>
+                                <p style='margin: 12px 0 0 0; color: #666666; font-size: 16px; line-height: 1.5;'>Hi " . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ", we're excited to have you on board. Please verify your email to get started.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align='center' style='padding: 20px 40px;'>
+                                <a href=\"" . $verifyLink . "\" style='display: inline-block; background-color: #0d6efd; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; transition: background-color 0.2s;'>Verify Email Address</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 20px 40px;'>
+                                <div style='height: 1px; background-color: #eeeeee; width: 100%;'></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align='center' style='padding: 10px 40px 40px 40px;'>
+                                <p style='margin: 0 0 16px 0; color: #666666; font-size: 14px;'>Or enter this code on the verification page:</p>
+                                <div style='background-color: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 12px; padding: 20px; display: inline-block;'>
+                                    <span style='font-family: \"Courier New\", Courier, monospace; font-size: 36px; font-weight: 800; color: #333333; letter-spacing: 8px;'>" . $code . "</span>
+                                </div>
+                                <p style='margin: 20px 0 0 0; color: #999999; font-size: 12px;'>This link and code will expire in 1 hour.</p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style='padding: 30px 40px; background-color: #fafafa; text-align: center;'>
+                                <p style='margin: 0; color: #999999; font-size: 12px; line-height: 1.5;'>
+                                    &copy; " . date('Y') . " Quesiono. All rights reserved.<br>
+                                    If you didn't create an account, you can safely ignore this email.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>";
+
+    $sent = send_email($email, $subject, $body);
+    return ['sent' => $sent, 'code' => $code];
+}
+
 if (isset($_GET['toggleFollow'])) {
     if (!isset($_SESSION['user']['user_id'])) {
         echo json_encode(['success' => false, 'error' => 'not_logged_in']);
@@ -57,6 +153,39 @@ if (isset($_GET['markRead'])) {
         $upd->bind_param("i", $uid);
         $upd->execute();
     }
+    header("location: " . $_SERVER['HTTP_REFERER']);
+    exit;
+} else if (isset($_POST['resendCode'])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+
+    $email = null;
+    $uid = null;
+    $username = "User";
+
+    if (isset($_SESSION['user']['user_id'])) {
+        $uid = $_SESSION['user']['user_id'];
+        $email = $_SESSION['user']['email'];
+        $username = $_SESSION['user']['username'];
+    } elseif (isset($_SESSION['temp_verify_user']['user_id'])) {
+        $uid = $_SESSION['temp_verify_user']['user_id'];
+        $email = $_SESSION['temp_verify_user']['email'];
+        
+        // Get username from DB
+        $stmt = $conn->prepare("SELECT username FROM users WHERE id=? LIMIT 1");
+        $stmt->bind_param("i", $uid);
+        $stmt->execute();
+        $username = $stmt->get_result()->fetch_assoc()['username'] ?? "User";
+    }
+
+    if ($uid && $email) {
+        $result = send_verification_email($conn, $uid, $email, $username);
+        $_SESSION['notice'] = $result['sent'] ? "Verification email resent. Please check your inbox." : "Failed to resend email. Your code is: <strong>" . $result['code'] . "</strong>";
+    } else {
+        $_SESSION['error'] = "Could not identify user for resending code. Please try logging in again.";
+    }
+    
     header("location: " . $_SERVER['HTTP_REFERER']);
     exit;
 } else if (isset($_POST['update_profile_pic'])) {
@@ -173,110 +302,10 @@ if (isset($_POST['signup'])) {
     $stmt->bind_param("ssss", $username, $email, $gender, $storePass);
     if ($stmt->execute()) {
         $uid = (int)$stmt->insert_id;
-        // Do NOT set $_SESSION["user"] here anymore.
-        // The user must verify first, then log in manually.
-
-        // Email verification token setup
-        $ddl = "CREATE TABLE IF NOT EXISTS email_verification_tokens (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            user_id INT NOT NULL,
-            token CHAR(64) NOT NULL,
-            code CHAR(6) NOT NULL,
-            expires_at DATETIME NOT NULL,
-            used TINYINT(1) NOT NULL DEFAULT 0,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            INDEX idx_token (token),
-            INDEX idx_code (code),
-            INDEX idx_user_expires (user_id, expires_at)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
-        $conn->query($ddl);
-
-        // Check if code column exists (migration for existing table)
-        $res = $conn->query("SHOW COLUMNS FROM email_verification_tokens LIKE 'code'");
-        if ($res->num_rows === 0) {
-            $conn->query("ALTER TABLE email_verification_tokens ADD COLUMN code CHAR(6) NOT NULL AFTER token");
-        }
-
-        $token = generate_token(64);
-        $code = sprintf("%06d", mt_rand(1, 999999));
-        $expires = date('Y-m-d H:i:s', time() + 60 * 60); // 1 hour
-        $ins = $conn->prepare("INSERT INTO email_verification_tokens (user_id, token, code, expires_at) VALUES (?, ?, ?, ?)");
-        $ins->bind_param("isss", $uid, $token, $code, $expires);
-        $ins->execute();
-
-        $verifyLink = base_url() . "/server/requests.php?verifyEmail=" . urlencode($token);
-        $subject = "Verify your email for Quesiono";
-        $body = "
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta charset='UTF-8'>
-            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
-            <title>Verify your email</title>
-        </head>
-        <body style='margin: 0; padding: 0; background-color: #f4f7f9; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;'>
-            <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: #f4f7f9; padding: 40px 0;'>
-                <tr>
-                    <td align='center'>
-                        <table border='0' cellpadding='0' cellspacing='0' width='600' style='background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05);'>
-                            <!-- Header -->
-                            <tr>
-                                <td align='center' style='padding: 40px 40px 20px 40px;'>
-                                    <h1 style='margin: 0; color: #0d6efd; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;'>Quesiono</h1>
-                                </td>
-                            </tr>
-                            
-                            <!-- Hero Section -->
-                            <tr>
-                                <td style='padding: 0 40px 20px 40px; text-align: center;'>
-                                    <h2 style='margin: 0; color: #1a1a1a; font-size: 24px; font-weight: 700; line-height: 1.3;'>Welcome to our community!</h2>
-                                    <p style='margin: 12px 0 0 0; color: #666666; font-size: 16px; line-height: 1.5;'>Hi " . htmlspecialchars($username, ENT_QUOTES, 'UTF-8') . ", we're excited to have you on board. Please verify your email to get started.</p>
-                                </td>
-                            </tr>
-
-                            <!-- Main Button -->
-                            <tr>
-                                <td align='center' style='padding: 20px 40px;'>
-                                    <a href=\"" . $verifyLink . "\" style='display: inline-block; background-color: #0d6efd; color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 16px; transition: background-color 0.2s;'>Verify Email Address</a>
-                                </td>
-                            </tr>
-
-                            <!-- Divider -->
-                            <tr>
-                                <td style='padding: 20px 40px;'>
-                                    <div style='height: 1px; background-color: #eeeeee; width: 100%;'></div>
-                                </td>
-                            </tr>
-
-                            <!-- Alternate Code -->
-                            <tr>
-                                <td align='center' style='padding: 10px 40px 40px 40px;'>
-                                    <p style='margin: 0 0 16px 0; color: #666666; font-size: 14px;'>Or enter this code on the verification page:</p>
-                                    <div style='background-color: #f8f9fa; border: 2px dashed #dee2e6; border-radius: 12px; padding: 20px; display: inline-block;'>
-                                        <span style='font-family: \"Courier New\", Courier, monospace; font-size: 36px; font-weight: 800; color: #333333; letter-spacing: 8px;'>" . $code . "</span>
-                                    </div>
-                                    <p style='margin: 20px 0 0 0; color: #999999; font-size: 12px;'>This link and code will expire in 1 hour.</p>
-                                </td>
-                            </tr>
-
-                            <!-- Footer -->
-                            <tr>
-                                <td style='padding: 30px 40px; background-color: #fafafa; text-align: center;'>
-                                    <p style='margin: 0; color: #999999; font-size: 12px; line-height: 1.5;'>
-                                        &copy; " . date('Y') . " Quesiono. All rights reserved.<br>
-                                        If you didn't create an account, you can safely ignore this email.
-                                    </p>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-            </table>
-        </body>
-        </html>";
-
-        $sent = send_email($email, $subject, $body);
-        $_SESSION['notice'] = $sent ? "Verification email sent. Please check your inbox." : "Verification email failed to send. Your confirmation code is: <strong>" . $code . "</strong>";
+        
+        $result = send_verification_email($conn, $uid, $email, $username);
+        
+        $_SESSION['notice'] = $result['sent'] ? "Verification email sent. Please check your inbox." : "Verification email failed to send. Your confirmation code is: <strong>" . $result['code'] . "</strong>";
         header("location: /Quesiono/verify-code");
     } else {
         echo "Registration Failed!! Try Again";
@@ -300,9 +329,14 @@ if (isset($_POST['signup'])) {
         $valid = password_verify($password, $row['password']) || ($password === $row['password']);
         if ($valid) {
             if (!(int)$row['verified']) {
-                // For unverified users, we only store minimal info for verification page
-                $_SESSION["temp_verify_user"] = ["email" => $email, "user_id" => $row['id']];
-                $_SESSION['notice'] = "Please verify your email to continue.";
+                // For unverified users, send a fresh verification code and redirect
+                $uid = $row['id'];
+                $username = $row['username'];
+                
+                $result = send_verification_email($conn, $uid, $email, $username);
+                
+                $_SESSION["temp_verify_user"] = ["email" => $email, "user_id" => $uid];
+                $_SESSION['notice'] = $result['sent'] ? "Please verify your email to continue. A new code has been sent to your inbox." : "Please verify your email to continue. Your code is: <strong>" . $result['code'] . "</strong>";
                 header("location: /Quesiono/verify-code");
                 exit;
             }
@@ -397,7 +431,7 @@ if (isset($_POST['signup'])) {
 
     $title = $_POST['title'];
     $subtitle = $_POST['subtitle'];
-    $content = $_POST['content'];
+    $content = sanitize_html($_POST['content']);
     $template = $_POST['template'];
     $category_id = (!empty($_POST['category']) && is_numeric($_POST['category'])) ? (int)$_POST['category'] : null;
     $user_id = $_SESSION['user']['user_id'];
@@ -417,7 +451,7 @@ if (isset($_POST['signup'])) {
                 if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
                     $url = "https://" . $url;
                 }
-                $links[] = ['text' => htmlspecialchars($text), 'url' => filter_var($url, FILTER_SANITIZE_URL)];
+                $links[] = ['text' => $text, 'url' => filter_var($url, FILTER_SANITIZE_URL)];
             }
         }
     }
@@ -434,6 +468,61 @@ if (isset($_POST['signup'])) {
     } else {
         $_SESSION['error'] = "Post creation failed: " . $stmt->error;
         header("location: /Quesiono/create-post");
+        exit;
+    }
+} else if (isset($_POST["updateRichPost"])) {
+    if (!isset($_POST['csrf']) || $_POST['csrf'] !== $_SESSION['csrf_token']) {
+        exit("Invalid request");
+    }
+    if (!isset($_SESSION['user']['user_id'])) {
+        header("location: /Quesiono/login");
+        exit;
+    }
+    
+    $post_id = (int)$_POST['post_id'];
+    $user_id = $_SESSION['user']['user_id'];
+    
+    // Verify ownership
+    $check = $conn->prepare("SELECT id FROM posts WHERE id = ? AND user_id = ?");
+    $check->bind_param("ii", $post_id, $user_id);
+    $check->execute();
+    if ($check->get_result()->num_rows === 0) {
+        $_SESSION['error'] = "You do not have permission to edit this post.";
+        header("location: /Quesiono/");
+        exit;
+    }
+
+    $title = $_POST['title'];
+    $subtitle = $_POST['subtitle'];
+    $content = sanitize_html($_POST['content']);
+    $template = $_POST['template'];
+    $category_id = (!empty($_POST['category']) && is_numeric($_POST['category'])) ? (int)$_POST['category'] : null;
+
+    // Handle links from dynamic inputs
+    $links = [];
+    if (isset($_POST['link_texts']) && isset($_POST['link_urls'])) {
+        foreach ($_POST['link_texts'] as $index => $text) {
+            $url = $_POST['link_urls'][$index];
+            if (!empty($text) && !empty($url)) {
+                if (!preg_match("~^(?:f|ht)tps?://~i", $url)) {
+                    $url = "https://" . $url;
+                }
+                $links[] = ['text' => $text, 'url' => filter_var($url, FILTER_SANITIZE_URL)];
+            }
+        }
+    }
+    $links_json = json_encode($links);
+
+    $stmt = $conn->prepare("UPDATE posts SET category_id = ?, title = ?, subtitle = ?, content = ?, links = ?, template = ? WHERE id = ? AND user_id = ?");
+    $stmt->bind_param("isssssii", $category_id, $title, $subtitle, $content, $links_json, $template, $post_id, $user_id);
+
+    if ($stmt->execute()) {
+        $_SESSION['notice'] = "Your post has been updated successfully!";
+        header("location: /Quesiono/post-details?post-id=" . $post_id);
+        exit;
+    } else {
+        $_SESSION['error'] = "Post update failed: " . $stmt->error;
+        header("location: /Quesiono/edit-post?post-id=" . $post_id);
         exit;
     }
 } else if (isset($_GET['delete'])) {
@@ -748,7 +837,7 @@ if (isset($_POST['signup'])) {
                 header("location: /Quesiono/verified");
                 exit;
             } else {
-                $_SESSION['error'] = "This verification code has expired. Please sign up again.";
+                $_SESSION['error'] = "This verification code has expired. Please use the 'Resend Code' button to get a new one.";
             }
         } else {
             $_SESSION['error'] = "The code you entered is incorrect. Please check and try again.";

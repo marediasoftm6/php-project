@@ -13,76 +13,76 @@ $path = str_replace($base_path, '', $request);
 $path = strtok($path, '?'); // Remove query string
 $path = trim($path, '/');
 
-if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['askQuestion']) && !isset($_GET['about']) && !isset($_GET['post']) && !isset($_GET['all-posts']) && !isset($_GET['my-posts']) && !isset($_GET['profile_edit']) && !isset($_GET['settings'])) {
-    // 1. Check for Static Routes first
-    if ($path === 'about') {
-        $_GET['about'] = 'true';
-    } else if ($path === 'privacy') {
-        $_GET['privacy'] = 'true';
-    } else if ($path === 'signup') {
-        $_GET['signup'] = 'true';
-    } else if ($path === 'login') {
-        $_GET['login'] = 'true';
-    } else if ($path === 'ask-question') {
-        $_GET['askQuestion'] = 'true';
-    } else if ($path === 'create-post') {
-        $_GET['post'] = 'true';
-    } else if ($path === 'my-posts') {
-        $_GET['my-posts'] = 'true';
-    } else if ($path === 'posts') {
-        $_GET['all-posts'] = 'true';
-    } else if ($path === 'categories') {
-        $_GET['categories'] = 'true';
-    } else if ($path === 'latest') {
-        $_GET['latest'] = 'true';
-    } else if ($path === 'profile-edit') {
-        $_GET['profile_edit'] = 'true';
-    } else if ($path === 'settings') {
-        $_GET['settings'] = 'true';
-    } else if ($path === 'verified') {
-        $_GET['verified'] = 'true';
-    } else if ($path === 'verify-code') {
-        $_GET['verify-code'] = 'true';
+// 1. Check for Static Routes first
+if ($path === 'edit-post') {
+    $_GET['edit-post'] = 'true';
+} else if ($path === 'about') {
+    $_GET['about'] = 'true';
+} else if ($path === 'privacy') {
+    $_GET['privacy'] = 'true';
+} else if ($path === 'signup') {
+    $_GET['signup'] = 'true';
+} else if ($path === 'login') {
+    $_GET['login'] = 'true';
+} else if ($path === 'ask-question') {
+    $_GET['askQuestion'] = 'true';
+} else if ($path === 'create-post') {
+    $_GET['post'] = 'true';
+} else if ($path === 'my-posts') {
+    $_GET['my-posts'] = 'true';
+} else if ($path === 'posts') {
+    $_GET['all-posts'] = 'true';
+} else if ($path === 'categories') {
+    $_GET['categories'] = 'true';
+} else if ($path === 'latest') {
+    $_GET['latest'] = 'true';
+} else if ($path === 'profile-edit') {
+    $_GET['profile_edit'] = 'true';
+} else if ($path === 'settings') {
+    $_GET['settings'] = 'true';
+} else if ($path === 'verified') {
+    $_GET['verified'] = 'true';
+} else if ($path === 'verify-code') {
+    $_GET['verify-code'] = 'true';
+} else if ($path) {
+    // 2. Check for Dynamic Routes (Profile, Question, Category, Post)
+    // Check if path matches a username (Profile)
+    $decodedPath = urldecode($path);
+    $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
+    $stmt->bind_param("s", $decodedPath);
+    $stmt->execute();
+    $res = $stmt->get_result();
+    if ($res->num_rows > 0) {
+        $user = $res->fetch_assoc();
+        $_GET['u-id'] = $user['id'];
+        $_GET['profile'] = 'true';
     } else {
-        // 2. Check for Dynamic Routes (Profile, Question, Category, Post)
-        // Check if path matches a username (Profile)
-        $decodedPath = urldecode($path);
-        $stmt = $conn->prepare("SELECT id FROM users WHERE username = ? LIMIT 1");
-        $stmt->bind_param("s", $decodedPath);
+        // Check if path matches a question slug
+        $stmt = $conn->prepare("SELECT id FROM questions WHERE slug = ? LIMIT 1");
+        $stmt->bind_param("s", $path);
         $stmt->execute();
         $res = $stmt->get_result();
         if ($res->num_rows > 0) {
-            $user = $res->fetch_assoc();
-            $_GET['u-id'] = $user['id'];
-            $_GET['profile'] = 'true';
+            $q = $res->fetch_assoc();
+            $_GET['q-id'] = $q['id'];
         } else {
-            // Check if path matches a question slug
-            $stmt = $conn->prepare("SELECT id FROM questions WHERE slug = ? LIMIT 1");
+            // Check if path matches a category slug
+            $stmt = $conn->prepare("SELECT id FROM category WHERE slug = ? LIMIT 1");
             $stmt->bind_param("s", $path);
             $stmt->execute();
             $res = $stmt->get_result();
             if ($res->num_rows > 0) {
-                $q = $res->fetch_assoc();
-                $_GET['q-id'] = $q['id'];
+                $c = $res->fetch_assoc();
+                $_GET['c-id'] = $c['id'];
             } else {
-                // Check if path matches a category slug
-                $stmt = $conn->prepare("SELECT id FROM category WHERE slug = ? LIMIT 1");
+                // Check if path matches a post slug
+                $stmt = $conn->prepare("SELECT id FROM posts WHERE slug = ? LIMIT 1");
                 $stmt->bind_param("s", $path);
                 $stmt->execute();
                 $res = $stmt->get_result();
                 if ($res->num_rows > 0) {
-                    $c = $res->fetch_assoc();
-                    $_GET['c-id'] = $c['id'];
-                } else {
-                    // Check if path matches a post slug
-                    $stmt = $conn->prepare("SELECT id FROM posts WHERE slug = ? LIMIT 1");
-                    $stmt->bind_param("s", $path);
-                    $stmt->execute();
-                    $res = $stmt->get_result();
-                    if ($res->num_rows > 0) {
-                        $p = $res->fetch_assoc();
-                        $_GET['post-id'] = $p['id'];
-                    }
+                    $p = $res->fetch_assoc();
+                    $_GET['post-id'] = $p['id'];
                 }
             }
         }
@@ -139,6 +139,8 @@ if ($path && !isset($_GET['signup']) && !isset($_GET['login']) && !isset($_GET['
             include('./client/privacy.php');
         } else if (isset($_GET['post'])) {
             include('./client/post.php');
+        } else if (isset($_GET['edit-post']) || $path === 'edit-post') {
+            include('./client/edit-post.php');
         } else if (isset($_GET['post-id'])) {
             include('./client/post-details.php');
         } else if (isset($_GET['all-posts'])) {
